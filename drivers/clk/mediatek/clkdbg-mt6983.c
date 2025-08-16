@@ -11,7 +11,7 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 
-#include <clk-mux.h>
+#include "clk-mux.h"
 #include "clkdbg.h"
 #include "clkchk.h"
 #include "clk-fmeter.h"
