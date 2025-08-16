@@ -11,7 +11,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 
-#include "mtk_iommu.h"
+#include <mtk_iommu.h>
 
 #define DEFINE_PROC_ATTRIBUTE(__fops, __get, __set, __fmt)		  \
 static int __fops ## _open(struct inode *inode, struct file *file)	  \
