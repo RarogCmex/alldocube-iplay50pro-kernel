@@ -5493,7 +5493,7 @@ static void bfq_check_ioprio_change(struct bfq_io_cq *bic, struct bio *bio)
 	if (bfqq) {
 		struct bfq_queue *old_bfqq = bfqq;
 
-		bfqq = bfq_get_queue(bfqd, bio, false, bic);
+		bfqq = bfq_get_queue(bfqd, bio, false, bic, split);
 		bic_set_bfqq(bic, bfqq, false);
 		bfq_release_process_ref(bfqd, old_bfqq);
 	}
