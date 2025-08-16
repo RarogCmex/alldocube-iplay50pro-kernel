@@ -2,7 +2,9 @@ ccflags-y += \
 	-I$(srctree)/drivers/misc/mediatek/include/mt-plat \
 	-I$(srctree)/drivers/misc/mediatek/sspm/v2 \
 	-I$(srctree)/drivers/misc/mediatek/mcupm/include \
-	-I$(srctree)/drivers/gpu/mediatek/gpufreq
+	-I$(srctree)/drivers/gpu/mediatek/gpufreq \
+	-I$(srctree)/drivers/thermal/mediatek
+
 
 obj-$(CONFIG_MTK_SOC_THERMAL)	+= soc_temp.o
 obj-$(CONFIG_MTK_SOC_THERMAL_LVTS)	+= soc_temp_lvts.o

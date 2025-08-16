@@ -54,7 +54,7 @@
 #include "../../../block/blk.h"
 #include "../../../block/blk-mq.h"
 #include "../../../block/blk-mq-sched.h"
-#include "../scsi_priv.h"
+#include "../../../scsi/scsi_priv.h"
 
 /* Version info*/
 #define UFSSHPB_VER				0x0221

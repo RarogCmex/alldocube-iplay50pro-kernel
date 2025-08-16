@@ -11,7 +11,7 @@
 #include <linux/pm_qos.h>
 #include "ufshcd.h"
 #ifdef CONFIG_UFSFEATURE
-#include "vendor/ufsfeature.h"
+#include "feature/ufsfeature.h"
 #endif
 
 /*
