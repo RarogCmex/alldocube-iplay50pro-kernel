@@ -3,7 +3,7 @@
  * Copyright (c) 2019 MediaTek Inc.
  */
 
-#include <dbgtop.h>
+#include "dbgtop.h"
 #include <linux/device.h>
 #include <linux/kernel.h>
 #include <linux/io.h>
