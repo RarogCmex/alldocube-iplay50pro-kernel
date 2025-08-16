@@ -183,5 +183,4 @@ obj-$(CONFIG_REGULATOR_MT6895_ALPHA_SUPPORT) += k6895v1_64_95t_alpha/
 endif
 
 ccflags-$(CONFIG_REGULATOR_DEBUG) += -DDEBUG
-ccflags-$(CONFIG_REGULATOR_MTK_DVFSRC) += -I$(src)
-ccflags-$(CONFIG_REGULATOR_MTK_VMM) += -I$(src)
+ccflags-y += -I$(src)
