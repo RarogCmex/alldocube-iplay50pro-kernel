@@ -43,10 +43,10 @@
 
 #include "ufs.h"
 
-#include "ufsshpb.h"
-#include "ufstw.h"
-#include "ufshid.h"
-#include "ufsringbuf.h"
+#include "feature/hpb/ufsshpb.h"
+#include "feature/tw/ufstw.h"
+#include "feature/hid/ufshid.h"
+#include "feature/ringbuf/ufsringbuf.h"
 
 #define UFS_UPIU_MAX_GENERAL_LUN		8
 #define UFSHCD_STATE_OPERATIONAL		2	/* ufshcd.c */
