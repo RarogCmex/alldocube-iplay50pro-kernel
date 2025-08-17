@@ -89,7 +89,6 @@ static void nvt_ts_late_resume(struct early_suspend *h);
 static int32_t nvt_ts_suspend(struct device *dev);
 static int32_t nvt_ts_resume(struct device *dev);
 extern int get_lockdown_info_for_nvt(unsigned char *plockdowninfo);
-static int32_t nvt_check_palm(uint8_t input_id, uint8_t *data);
 static int nvt_write_ic_command(int mode, bool enable);
 uint32_t ENG_RST_ADDR  = 0x7FFF80;
 uint32_t SWRST_N8_ADDR; /* read from dtsi */
@@ -1850,30 +1849,6 @@ static void nvt_open_test_work(struct work_struct *work)
 
 static struct xiaomi_touch_interface xiaomi_touch_interfaces;
 
-int32_t nvt_check_palm(uint8_t input_id, uint8_t *data)
-{
-	int32_t ret = 0;
-	uint8_t func_type = data[2];
-	uint8_t palm_state = data[3];
-
-	if ((input_id == DATA_PROTOCOL) && (func_type == FUNCPAGE_PALM)) {
-		ret = palm_state;
-		if (palm_state == PACKET_PALM_ON) {
-			NVT_LOG("get packet palm on event.\n");
-			update_palm_sensor_value(1);
-		} else if (palm_state == PACKET_PALM_OFF) {
-			NVT_LOG("get packet palm off event.\n");
-			update_palm_sensor_value(0);
-		} else {
-			NVT_ERR("invalid palm state %d!\n", palm_state);
-			ret = -1;
-		}
-	} else {
-		ret = 0;
-	}
-
-	return ret;
-}
 
 static int nvt_palm_sensor_write(int value)
 {

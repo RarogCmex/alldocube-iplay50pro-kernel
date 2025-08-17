@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2010 - 2018 Novatek, Inc.
  *
@@ -15,6 +16,8 @@
  * more details.
  *
  */
+#define CHIP_VER_TRIM_ADDR 0x3F004
+#define CHIP_VER_TRIM_OLD_ADDR 0x1F64E
 
 struct nvt_ts_mem_map {
 	uint32_t EVENT_BUF_ADDR;
@@ -35,23 +38,6 @@ struct nvt_ts_mem_map {
 struct nvt_ts_hw_info {
 	uint8_t carrier_system;
 	uint8_t hw_crc;
-};
-
-static const struct nvt_ts_mem_map NT36523_memory_map = {
-	.EVENT_BUF_ADDR           = 0x2FE00,
-	.RAW_PIPE0_ADDR           = 0x30FA0,
-	.RAW_PIPE1_ADDR           = 0x30FA0,
-	.BASELINE_ADDR            = 0x36510,
-	.BASELINE_BTN_ADDR        = 0,
-	.DIFF_PIPE0_ADDR          = 0x373E8,
-	.DIFF_PIPE1_ADDR          = 0x38068,
-	.RAW_BTN_PIPE0_ADDR       = 0,
-	.RAW_BTN_PIPE1_ADDR       = 0,
-	.DIFF_BTN_PIPE0_ADDR      = 0,
-	.DIFF_BTN_PIPE1_ADDR      = 0,
-	
-	.RW_FLASH_DATA_ADDR       = 0x24002,
-	
 };
 
 static const struct nvt_ts_mem_map NT36526_memory_map = {
@@ -150,11 +136,6 @@ static const struct nvt_ts_mem_map NT36676F_memory_map = {
 	.RW_FLASH_DATA_ADDR       = 0x14002,
 };
 
-static struct nvt_ts_hw_info NT36523_hw_info = {
-	.carrier_system = 2,
-	.hw_crc         = 2,
-};
-
 static struct nvt_ts_hw_info NT36526_hw_info = {
 	.carrier_system = 2,
 	.hw_crc         = 2,
@@ -194,18 +175,14 @@ struct nvt_ts_trim_id_table {
 };
 
 static const struct nvt_ts_trim_id_table trim_id_table[] = {
-	{.id = {0x20, 0xFF, 0xFF, 0x23, 0x65, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
-		.mmap = &NT36523_memory_map,  .hwinfo = &NT36523_hw_info},
-	{.id = {0x35, 0xFF, 0xFF, 0x35, 0x36, 0x35}, .mask = {1, 0, 0, 1, 1, 1},
-		.mmap = &NT36523_memory_map,  .hwinfo = &NT36523_hw_info},
-	{.id = {0x0C, 0xFF, 0xFF, 0x23, 0x65, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
-		.mmap = &NT36523_memory_map,  .hwinfo = &NT36523_hw_info},
-	{.id = {0x0B, 0xFF, 0xFF, 0x23, 0x65, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
-		.mmap = &NT36523_memory_map,  .hwinfo = &NT36523_hw_info},
-	{.id = {0x0A, 0xFF, 0xFF, 0x23, 0x65, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
-		.mmap = &NT36523_memory_map,  .hwinfo = &NT36523_hw_info},
-	{.id = {0xFF, 0xFF, 0xFF, 0x23, 0x65, 0x03}, .mask = {0, 0, 0, 1, 1, 1},
-		.mmap = &NT36523_memory_map,  .hwinfo = &NT36523_hw_info},
+	{.id = {0x20, 0xFF, 0xFF, 0x72, 0x66, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
+		.mmap = &NT36675_memory_map,  .hwinfo = &NT36675_hw_info},
+	{.id = {0x00, 0xFF, 0xFF, 0x80, 0x66, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
+		.mmap = &NT36675_memory_map,  .hwinfo = &NT36675_hw_info},
+	{.id = {0x0C, 0xFF, 0xFF, 0x25, 0x65, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
+		.mmap = &NT36672A_memory_map, .hwinfo = &NT36672A_hw_info},
+	{.id = {0x0E, 0xFF, 0xFF, 0x72, 0x66, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
+		.mmap = &NT36675_memory_map,  .hwinfo = &NT36675_hw_info},
 	{.id = {0x0C, 0xFF, 0xFF, 0x72, 0x66, 0x03}, .mask = {1, 0, 0, 1, 1, 1},
 		.mmap = &NT36675_memory_map,  .hwinfo = &NT36675_hw_info},
 	{.id = {0xFF, 0xFF, 0xFF, 0x26, 0x65, 0x03}, .mask = {0, 0, 0, 1, 1, 1},
