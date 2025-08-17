@@ -24,6 +24,7 @@ imgsensor-objs := \
 	adaptor-ctrls.o \
 	adaptor-ioctl.o \
 	adaptor-common-ctrl.o \
+	adaptor-trace.o \
 
 define FILTER_DRV
 ifeq ($(wildcard $(IMGSENSOR_DRIVER_PATH)/camera_project/$(IMGSENSOR_PROJECT)/$(1)),)
@@ -44,6 +45,11 @@ unknown_drv :=
 endif
 ifneq ($(wildcard $(IMGSENSOR_DRIVER_PATH)/camera_project/k6895v1_64_95t_alpha/$(1)),)
 alpha_drv_k6895 += $(1)
+total_subdrvs += $(1)
+unknown_drv :=
+endif
+ifneq ($(wildcard $(IMGSENSOR_DRIVER_PATH)/camera_project/k6983v1_64_foldable/$(1)),)
+6983_foldable_drv += $(1)
 total_subdrvs += $(1)
 unknown_drv :=
 endif
@@ -92,6 +98,11 @@ endif
 ifneq ($(alpha_drv_k6895),)
 $(info alpha_drv_k6895 : $(alpha_drv_k6895))
 $(foreach drv,$(alpha_drv_k6895),$(eval $(call add_subdrv,camera_project/k6895v1_64_95t_alpha/$(drv))))
+endif
+
+ifneq ($(6983_foldable_drv),)
+$(info 6983_foldable_drv : $(6983_foldable_drv))
+$(foreach drv,$(6983_foldable_drv),$(eval $(call add_subdrv,camera_project/k6983v1_64_foldable/$(drv))))
 endif
 
 comma := ,

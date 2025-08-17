@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 MediaTek Inc.
-// Copyright (C) 2022 XiaoMi, Inc.
+
 /*****************************************************************************
  *
  * Filename:
@@ -448,7 +448,7 @@ static void imx586_set_pdaf_reg_setting(struct subdrv_ctx *ctx,
 
 static kal_uint16 read_cmos_eeprom_8(struct subdrv_ctx *ctx, kal_uint16 addr)
 {
-	u8 val;
+	u8 val = 0;
 
 	adaptor_i2c_rd_u8(ctx->i2c_client, 0xa0 >> 1, addr, &val);
 
@@ -649,7 +649,7 @@ static void write_shutter(struct subdrv_ctx *ctx, kal_uint32 shutter)
 		pr_debug("enter long exposure mode, time is %d",
 			longexposure_times);
 		long_exposure_status = 1;
-		ctx->frame_length = shutter + 32;
+		//ctx->frame_length = shutter + 32;
 		if (!_is_seamless)
 			set_cmos_sensor_8(ctx, 0x3100, longexposure_times & 0x07);
 		else {
@@ -878,17 +878,21 @@ static kal_uint16 gain2reg(struct subdrv_ctx *ctx, const kal_uint32 gain)
  *************************************************************************/
 static kal_uint32 set_gain(struct subdrv_ctx *ctx, kal_uint32 gain)
 {
-	kal_uint16 reg_gain, min_gain;
-	kal_uint32 max_gain;
+	kal_uint16 reg_gain;
+	kal_uint32 min_gain, max_gain;
 
-	max_gain = imgsensor_info.max_gain;//setuphere for mode use
-	min_gain = BASEGAIN;//setuphere for mode use
+	min_gain = BASEGAIN;
+	max_gain = imgsensor_info.max_gain;
 
-	if (ctx->sensor_mode == IMGSENSOR_MODE_CUSTOM3 ||//16x for full size mode
-			ctx->sensor_mode == IMGSENSOR_MODE_CUSTOM4 ||
-			ctx->sensor_mode == IMGSENSOR_MODE_CUSTOM6) {
-		/* 8K6K */
+	//16x for full size mode
+	switch (ctx->sensor_mode) {
+	case IMGSENSOR_MODE_CUSTOM3:
+	case IMGSENSOR_MODE_CUSTOM4:
+	case IMGSENSOR_MODE_CUSTOM6:
 		max_gain = 16 * BASEGAIN;
+		break;
+	default:
+		break;
 	}
 
 	if (gain < min_gain || gain > max_gain) {
@@ -1017,6 +1021,7 @@ static kal_uint32 streaming_control(struct subdrv_ctx *ctx, kal_bool enable)
 		read_cmos_sensor_8(ctx, 0x0859));
 
 	if (enable) {
+		//test pattern reset
 		if (read_cmos_sensor_8(ctx, 0x0350) != 0x01) {
 			pr_debug("single cam scenario enable auto-extend");
 			write_cmos_sensor_8(ctx, 0x0350, 0x01);
@@ -3509,8 +3514,6 @@ static void custom3_setting(struct subdrv_ctx *ctx)
 
 	LOG_INF("%s full size 30 fps E!\n", __func__);
 	/*************MIPI output setting************/
-	imx586_table_write_cmos_sensor(ctx, imx586_custom3_setting,
-		sizeof(imx586_custom3_setting)/sizeof(kal_uint16));
 
 	if (!_is_seamless)
 		imx586_table_write_cmos_sensor(ctx, imx586_custom3_setting, _length);
@@ -4066,7 +4069,8 @@ static int get_resolution(struct subdrv_ctx *ctx,
 	int i = 0;
 
 	for (i = SENSOR_SCENARIO_ID_MIN; i < SENSOR_SCENARIO_ID_MAX; i++) {
-		if (i < imgsensor_info.sensor_mode_num) {
+		if (i < imgsensor_info.sensor_mode_num &&
+			i < ARRAY_SIZE(imgsensor_winsize_info)) {
 			sensor_resolution->SensorWidth[i] = imgsensor_winsize_info[i].w2_tg_size;
 			sensor_resolution->SensorHeight[i] = imgsensor_winsize_info[i].h2_tg_size;
 		} else {
@@ -4074,8 +4078,6 @@ static int get_resolution(struct subdrv_ctx *ctx,
 			sensor_resolution->SensorHeight[i] = 0;
 		}
 	}
-
-
 
 	return ERROR_NONE;
 } /* get_resolution */
@@ -4174,6 +4176,7 @@ static int control(struct subdrv_ctx *ctx,
 	case SENSOR_SCENARIO_ID_CUSTOM15:
 		//imgsensor.sensor_mode = scenario_id;
 		custom5_15(ctx, image_window, sensor_config_data);
+		break;
 	case SENSOR_SCENARIO_ID_NORMAL_PREVIEW:
 		preview(ctx, image_window, sensor_config_data);
 		break;
@@ -4225,7 +4228,7 @@ static kal_uint32 seamless_switch(struct subdrv_ctx *ctx,
 	_is_seamless = true;
 	memset(_i2c_data, 0x0, sizeof(_i2c_data));
 	_size_to_write = 0;
-	LOG_INF("%s %d, %d, %d, %d, %d sizeof(_i2c_data) %d\n",
+	LOG_INF("%s %d, %d, %d, %d, %d sizeof(_i2c_data) %lu\n",
 		__func__, scenario_id, shutter, gain,
 		shutter_2ndframe, gain_2ndframe, sizeof(_i2c_data));
 
@@ -4691,13 +4694,21 @@ static kal_uint32 get_default_framerate_by_scenario(struct subdrv_ctx *ctx,
 
 static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 mode)
 {
-	DEBUG_LOG(ctx, "mode: %d\n", mode);
-
+	if (mode != ctx->test_pattern)
+		pr_debug("test_pattern mode: %d\n", mode);
+	/*Clear data if not solid color*/
+	if (mode != 1) {
+		memset(_i2c_data, 0x0, sizeof(_i2c_data));
+		_size_to_write = 0;
+	}
+	if (_size_to_write == 0)
+		set_cmos_sensor_8(ctx, 0x0104, 0x01);
 	if (mode)
-		write_cmos_sensor_8(ctx, 0x0601, mode); /*100% Color bar*/
+		set_cmos_sensor_8(ctx, 0x0601, mode); /*100% Color bar*/
 	else if (ctx->test_pattern)
-		write_cmos_sensor_8(ctx, 0x0601, 0x0000); /*No pattern*/
-
+		set_cmos_sensor_8(ctx, 0x0601, 0x00); /*No pattern*/
+	set_cmos_sensor_8(ctx, 0x0104, 0x00);
+	commit_write_sensor(ctx);
 	ctx->test_pattern = mode;
 	return ERROR_NONE;
 }
@@ -4705,10 +4716,10 @@ static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 mode)
 static kal_uint32 set_test_pattern_data(struct subdrv_ctx *ctx, struct mtk_test_pattern_data *data)
 {
 
-	pr_debug("test_patterndata R = %x, Gr = %x,Gb = %x,B = %x\n",
+	DEBUG_LOG(ctx, "test_patterndata R = %x, Gr = %x,Gb = %x,B = %x\n",
 		data->Channel_R >> 22, data->Channel_Gr >> 22,
 		data->Channel_Gb >> 22, data->Channel_B >> 22);
-
+	set_cmos_sensor_8(ctx, 0x0104, 0x01);
 	set_cmos_sensor_8(ctx, 0x0602, (data->Channel_R >> 30) & 0x3);
 	set_cmos_sensor_8(ctx, 0x0603, (data->Channel_R >> 22) & 0xff);
 	set_cmos_sensor_8(ctx, 0x0604, (data->Channel_Gr >> 30) & 0x3);
@@ -4717,7 +4728,7 @@ static kal_uint32 set_test_pattern_data(struct subdrv_ctx *ctx, struct mtk_test_
 	set_cmos_sensor_8(ctx, 0x0607, (data->Channel_B >> 22) & 0xff);
 	set_cmos_sensor_8(ctx, 0x0608, (data->Channel_Gb >> 30) & 0x3);
 	set_cmos_sensor_8(ctx, 0x0609, (data->Channel_Gb >> 22) & 0xff);
-	commit_write_sensor(ctx);
+	//commit_write_sensor(ctx);
 	return ERROR_NONE;
 }
 
@@ -4728,7 +4739,7 @@ static kal_uint32 get_sensor_temperature(struct subdrv_ctx *ctx)
 
 	temperature = read_cmos_sensor_8(ctx, 0x013a);
 
-	if (temperature >= 0x0 && temperature <= 0x4F)
+	if (temperature <= 0x4F)
 		temperature_convert = temperature;
 	else if (temperature >= 0x50 && temperature <= 0x7F)
 		temperature_convert = 80;
@@ -4824,7 +4835,20 @@ static int feature_control(
 		break;
 	case SENSOR_FEATURE_GET_GAIN_RANGE_BY_SCENARIO:
 		*(feature_data + 1) = imgsensor_info.min_gain;
-		*(feature_data + 2) = imgsensor_info.max_gain;
+
+		switch (*feature_data) {
+		/* non-binning */
+		case SENSOR_SCENARIO_ID_CUSTOM3:
+		case SENSOR_SCENARIO_ID_CUSTOM4:
+		case SENSOR_SCENARIO_ID_CUSTOM6:
+			*(feature_data + 2) = BASEGAIN * 16;
+			break;
+		/* binning */
+		default:
+			*(feature_data + 2) = imgsensor_info.max_gain;
+			break;
+		}
+
 		break;
 	case SENSOR_FEATURE_GET_BASE_GAIN_ISO_AND_STEP:
 		*(feature_data + 0) = imgsensor_info.min_gain_iso;
@@ -4988,7 +5012,7 @@ static int feature_control(
 		break;
 	#endif
 	case SENSOR_FEATURE_SET_GAIN:
-		set_gain(ctx, (UINT32) *feature_data);
+		set_gain(ctx, (UINT32) * feature_data);
 		break;
 	case SENSOR_FEATURE_SET_FLASHLIGHT:
 		break;
@@ -5432,6 +5456,7 @@ break;
 		case SENSOR_SCENARIO_ID_NORMAL_CAPTURE:
 			memcpy((void *)pvcinfo, (void *)&SENSOR_VC_INFO[7],
 				sizeof(struct SENSOR_VC_INFO_STRUCT));
+			break;
 		case SENSOR_SCENARIO_ID_CUSTOM6:
 			memcpy((void *)pvcinfo, (void *)&SENSOR_VC_INFO[8],
 				sizeof(struct SENSOR_VC_INFO_STRUCT));

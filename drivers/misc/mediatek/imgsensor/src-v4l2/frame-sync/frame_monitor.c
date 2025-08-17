@@ -129,6 +129,16 @@ struct FrameMonitorInst {
 };
 static struct FrameMonitorInst frm_inst;
 
+
+#if defined(FS_UT)
+const static int ut_tg_mapping[23] = {
+	-1, -1, -1, 0, 1,
+	2, 3, 4, 5, 10,
+	11, 12, 13, 14, 15,
+	-1, -1, -1, -1, 6,
+	7, 8, 9
+};
+#endif
 /******************************************************************************/
 
 
@@ -711,6 +721,44 @@ void frm_set_frame_measurement(
 	/* x. clear check flag */
 	frm_inst.f_info[idx].wait_for_setting_predicted_fl = 0;
 }
+
+
+void frm_get_curr_frame_mesurement_and_ts_data(
+	const unsigned int idx, unsigned int *p_fmeas_idx,
+	unsigned int *p_pr_fl_us, unsigned int *p_pr_fl_lc,
+	unsigned int *p_act_fl_us, unsigned int *p_ts_arr)
+{
+	struct FrameMeasurement *p_fmeas = &frm_inst.f_info[idx].fmeas;
+	unsigned int fmeas_idx = 0;
+	unsigned int i = 0;
+
+	if (p_fmeas == NULL) {
+		LOG_MUST(
+			"[%u] ID:%#x(sidx:%u), tg:%u, p_fmeas is NULL\n",
+			idx,
+			frm_inst.f_info[idx].sensor_id,
+			frm_inst.f_info[idx].sensor_idx,
+			frm_inst.f_info[idx].tg);
+		return;
+	}
+
+
+	/* current result => ring back for get latest result */
+	fmeas_idx = ((p_fmeas->idx) + (VSYNCS_MAX - 1)) % VSYNCS_MAX;
+	if (p_fmeas_idx != NULL)
+		*p_fmeas_idx = fmeas_idx;
+
+	if (p_pr_fl_us != NULL)
+		*p_pr_fl_us = p_fmeas->results[fmeas_idx].predicted_fl_us;
+	if (p_pr_fl_lc != NULL)
+		*p_pr_fl_lc = p_fmeas->results[fmeas_idx].predicted_fl_lc;
+	if (p_act_fl_us != NULL)
+		*p_act_fl_us = p_fmeas->results[fmeas_idx].actual_fl_us;
+	if (p_ts_arr != NULL) {
+		for (i = 0; i < VSYNCS_MAX; ++i)
+			p_ts_arr[i] = p_fmeas->timestamps[i];
+	}
+}
 /******************************************************************************/
 
 
@@ -776,7 +824,7 @@ void frm_power_on_ccu(unsigned int flag)
  * this function will be called at streaming on / off
  * uses ccu_rproc_ipc_send function send command data to ccu
  */
-void frm_reset_ccu_vsync_timestamp(unsigned int idx)
+void frm_reset_ccu_vsync_timestamp(unsigned int idx, unsigned int en)
 {
 	unsigned int tg = 0;
 	uint32_t selbits = 0;
@@ -798,16 +846,20 @@ void frm_reset_ccu_vsync_timestamp(unsigned int idx)
 	ret = mtk_ccu_rproc_ipc_send(
 		frm_inst.ccu_pdev,
 		MTK_CCU_FEATURE_FMCTRL,
-		MSG_TO_CCU_RESET_VSYNC_TIMESTAMP,
+		(en)
+			? MSG_TO_CCU_RESET_VSYNC_TIMESTAMP
+			: MSG_TO_CCU_CLEAR_VSYNC_TIMESTAMP,
 		(void *)&selbits, sizeof(selbits));
 #endif
 
 	if (ret != 0)
-		LOG_PR_ERR("ERROR: call CCU reset tg:%u (selbits:%u) vsync data\n",
-			tg, selbits);
+		LOG_PR_ERR(
+			"ERROR: call CCU reset(1)/clear(0):%u, tg:%u (selbits:%u) vsync data, ret:%u\n",
+			en, tg, selbits, ret);
 	else
-		LOG_MUST("called CCU reset tg:%u (selbits:%u) vsync data\n",
-			tg, selbits);
+		LOG_MUST(
+			"called CCU reset(1)/clear(0):%u, tg:%u (selbits:%u) vsync data, ret:%u\n",
+			en, tg, selbits, ret);
 }
 
 
@@ -850,7 +902,7 @@ void frm_init_frame_info_st_data(
 
 #ifdef USING_CCU
 #ifndef DELAY_CCU_OP
-	frm_reset_ccu_vsync_timestamp(idx);
+	frm_reset_ccu_vsync_timestamp(idx, 1);
 #endif
 #endif
 
@@ -988,6 +1040,63 @@ unsigned int frm_convert_cammux_tg_to_ccu_tg(unsigned int tg)
 		tg, frm_inst.camsv0_tg, camsv_id, tg_mapped);
 
 	return tg_mapped;
+}
+
+
+static int frm_get_camsv_id(unsigned int id)
+{
+#if !defined(FS_UT)
+
+	struct device_node *dev_node = NULL;
+	unsigned int camsv_id, cammux_id;
+	int ret = -1;
+
+	do {
+		dev_node = of_find_compatible_node(dev_node, NULL,
+			"mediatek,camsv");
+
+		if (dev_node) {
+			if (of_property_read_u32(dev_node,
+					"mediatek,camsv-id", &camsv_id)
+				|| of_property_read_u32(dev_node,
+					"mediatek,cammux-id", &cammux_id)) {
+				/* property not found */
+				continue;
+			}
+
+			if (cammux_id == (id - 1)) {
+				ret = camsv_id;
+				break;
+			}
+		}
+	} while (dev_node);
+
+#if !defined(REDUCE_FRM_LOG)
+	LOG_MUST(
+		"get cammux_id:%u(from 1), camsv_id:%u(from 0), cammux_id:%u, ret:%d\n",
+		id, camsv_id, cammux_id, ret);
+#endif
+
+	return ret;
+
+#else
+	return ut_tg_mapping[id-1];
+#endif // FS_UT
+}
+
+
+unsigned int frm_convert_cammux_id_to_ccu_tg_id(unsigned int cammux_id)
+{
+	int camsv_id = frm_get_camsv_id(cammux_id);
+	unsigned int ccu_tg_id;
+
+	ccu_tg_id = (camsv_id >= 0) ? (camsv_id + CAMSV_TG_MIN) : cammux_id;
+
+	LOG_MUST(
+		"get cammux_id:%u(from 1), camsv_id:%d(from 0), ccu_tg_id:%u(CAMSV_TG_MIN:%u, CAMSV_TG_MAX:%u)\n",
+		cammux_id, camsv_id, ccu_tg_id, CAMSV_TG_MIN, CAMSV_TG_MAX);
+
+	return ccu_tg_id;
 }
 
 

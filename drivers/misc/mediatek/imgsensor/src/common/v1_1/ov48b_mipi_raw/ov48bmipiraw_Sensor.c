@@ -237,7 +237,7 @@ static struct imgsensor_struct imgsensor = {
 	.dummy_line = 0,
 	.current_fps = 300,
 	.autoflicker_en = KAL_FALSE,
-	.test_pattern = KAL_FALSE,
+	.test_pattern = 0,
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,
 	.ihdr_en = 0,
 	.i2c_write_id = 0x20,
@@ -323,6 +323,12 @@ static struct SET_PD_BLOCK_INFO_T imgsensor_pd_info = {
 #define I2C_BUFFER_LEN 3
 #endif
 
+static struct IMGSENSOR_I2C_CFG *get_i2c_cfg(void)
+{
+	return &(((struct IMGSENSOR_SENSOR_INST *)
+		  (imgsensor.psensor_func->psensor_inst))->i2c_cfg);
+}
+
 static kal_uint16 ov48b2q_table_write_cmos_sensor(
 					kal_uint16 *para, kal_uint32 len)
 {
@@ -347,13 +353,23 @@ static kal_uint16 ov48b2q_table_write_cmos_sensor(
 		if ((I2C_BUFFER_LEN - tosend) < 3 ||
 			len == IDX ||
 			addr != addr_last) {
-			iBurstWriteReg_multi(puSendCmd, tosend,
+			imgsensor_i2c_write(
+				get_i2c_cfg(),
+				puSendCmd,
+				tosend,
+				3,
 				imgsensor.i2c_write_id,
-				3, imgsensor_info.i2c_speed);
+				imgsensor_info.i2c_speed);
 			tosend = 0;
 		}
 #else
-		iWriteRegI2C(puSendCmd, 3, imgsensor.i2c_write_id);
+		imgsensor_i2c_write(
+			get_i2c_cfg(),
+			puSendCmd,
+			3,
+			3,
+			imgsensor.i2c_write_id,
+			IMGSENSOR_I2C_SPEED);
 		tosend = 0;
 
 #endif
@@ -389,9 +405,13 @@ static kal_uint16 ov48b2q_burst_write_cmos_sensor(
 		if ((tosend >= I2C_BUFFER_LEN) ||
 			len == IDX ||
 			addr != addr_last) {
-			iBurstWriteReg_multi(puSendCmd, tosend,
+			imgsensor_i2c_write(
+				get_i2c_cfg(),
+				puSendCmd,
+				tosend,
+				tosend,
 				imgsensor.i2c_write_id,
-				tosend, imgsensor_info.i2c_speed);
+				imgsensor_info.i2c_speed);
 			tosend = 0;
 		}
 	}
@@ -403,7 +423,14 @@ static kal_uint16 read_cmos_sensor(kal_uint32 addr)
 	kal_uint16 get_byte = 0;
 	char pusendcmd[2] = {(char)(addr >> 8), (char)(addr & 0xFF) };
 
-	iReadRegI2C(pusendcmd, 2, (u8 *)&get_byte, 1, imgsensor.i2c_write_id);
+	imgsensor_i2c_read(
+		get_i2c_cfg(),
+		pusendcmd,
+		2,
+		(u8 *)&get_byte,
+		1,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 	return get_byte;
 }
 
@@ -411,7 +438,13 @@ static void write_cmos_sensor(kal_uint32 addr, kal_uint32 para)
 {
 	char pusendcmd[3] = {(char)(addr >> 8),
 		(char)(addr & 0xFF), (char)(para & 0xFF)};
-	iWriteRegI2C(pusendcmd, 3, imgsensor.i2c_write_id);
+	imgsensor_i2c_write(
+		get_i2c_cfg(),
+		pusendcmd,
+		3,
+		3,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 }
 
 static void set_dummy(void)
@@ -1011,18 +1044,19 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 		spin_lock(&imgsensor_drv_lock);
 		imgsensor.i2c_write_id = imgsensor_info.i2c_addr_table[i];
 		spin_unlock(&imgsensor_drv_lock);
-	do {
-		*sensor_id = return_sensor_id();
-	if (*sensor_id == imgsensor_info.sensor_id) {
-		pr_debug("i2c write id: 0x%x, sensor id: 0x%x\n",
-			imgsensor.i2c_write_id, *sensor_id);
-			read_sensor_Cali();
-		return ERROR_NONE;
-	}
-		retry--;
-	} while (retry > 0);
-	i++;
-	retry = 1;
+		do {
+			*sensor_id = return_sensor_id();
+			if (*sensor_id == imgsensor_info.sensor_id) {
+				pr_info("[%s] i2c write id: 0x%x, sensor id: 0x%x\n",
+					__func__, imgsensor.i2c_write_id, *sensor_id);
+				read_sensor_Cali();
+
+				return ERROR_NONE;
+			}
+			retry--;
+		} while (retry > 0);
+		i++;
+		retry = 1;
 	}
 	if (*sensor_id != imgsensor_info.sensor_id) {
 		LOG_INF("%s: 0x%x fail\n", __func__, *sensor_id);
@@ -1043,19 +1077,19 @@ static kal_uint32 open(void)
 		spin_lock(&imgsensor_drv_lock);
 		imgsensor.i2c_write_id = imgsensor_info.i2c_addr_table[i];
 		spin_unlock(&imgsensor_drv_lock);
-	do {
-		sensor_id = return_sensor_id();
-	if (sensor_id == imgsensor_info.sensor_id) {
-		pr_debug("i2c write id: 0x%x, sensor id: 0x%x\n",
-			imgsensor.i2c_write_id, sensor_id);
-		break;
-	}
-		retry--;
-	} while (retry > 0);
-	i++;
-	if (sensor_id == imgsensor_info.sensor_id)
-		break;
-	retry = 2;
+		do {
+			sensor_id = return_sensor_id();
+			if (sensor_id == imgsensor_info.sensor_id) {
+				pr_debug("i2c write id: 0x%x, sensor id: 0x%x\n",
+					imgsensor.i2c_write_id, sensor_id);
+				break;
+			}
+			retry--;
+		} while (retry > 0);
+		i++;
+		if (sensor_id == imgsensor_info.sensor_id)
+			break;
+		retry = 2;
 	}
 	if (imgsensor_info.sensor_id != sensor_id) {
 		pr_debug("Open sensor id: 0x%x fail\n", sensor_id);
@@ -1077,7 +1111,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_en = 0;
-	imgsensor.test_pattern = KAL_FALSE;
+	imgsensor.test_pattern = 0;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 
@@ -1804,23 +1838,31 @@ static kal_uint32 get_default_framerate_by_scenario(
 	return ERROR_NONE;
 }
 
-static kal_uint32 set_test_pattern_mode(kal_bool enable)
+static kal_uint32 set_test_pattern_mode(kal_uint32 modes)
 {
-	pr_debug("Test_Pattern enable: %d\n", enable);
-	if (enable) {
+	pr_debug("Test_Pattern modes: %d\n", modes);
+	if (modes == 2) {//colorbar
 		write_cmos_sensor(0x5000, 0x81);
 		write_cmos_sensor(0x5001, 0x00);
 		write_cmos_sensor(0x5002, 0x92);
 		write_cmos_sensor(0x5081, 0x01);
-	} else {
+	} else if (modes == 5) {//black
+		write_cmos_sensor(0x3019, 0xf0);
+		write_cmos_sensor(0x4308, 0x01);
+	}
+
+	if ((modes != 2) && (imgsensor.test_pattern == 2)) {
 		write_cmos_sensor(0x5000, 0xCB);
 		write_cmos_sensor(0x5001, 0x43);
 		write_cmos_sensor(0x5002, 0x9E);
 		write_cmos_sensor(0x5081, 0x00);
+	} else if (modes != 5 && (imgsensor.test_pattern == 5)) {
+		write_cmos_sensor(0x3019, 0xd2);
+		write_cmos_sensor(0x4308, 0x00);
 	}
 
 	spin_lock(&imgsensor_drv_lock);
-	imgsensor.test_pattern = enable;
+	imgsensor.test_pattern = modes;
 	spin_unlock(&imgsensor_drv_lock);
 	return ERROR_NONE;
 }
@@ -1954,11 +1996,15 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		pScenarios = (MUINT32 *)((uintptr_t)(*(feature_data+1)));
 		switch (*feature_data) {
 		case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
-			*pScenarios = MSDK_SCENARIO_ID_CUSTOM1;
-			break;
+			/*
+			 **pScenarios = MSDK_SCENARIO_ID_CUSTOM1;
+			 *break;
+			 */
 		case MSDK_SCENARIO_ID_CUSTOM1:
-			*pScenarios = MSDK_SCENARIO_ID_CAMERA_PREVIEW;
-			break;
+			/*
+			 **pScenarios = MSDK_SCENARIO_ID_CAMERA_PREVIEW;
+			 *break;
+			 */
 		case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
 		case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
 		case MSDK_SCENARIO_ID_SLIM_VIDEO:
@@ -2168,7 +2214,7 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 			(MUINT32 *)(uintptr_t)(*(feature_data+1)));
 	break;
 	case SENSOR_FEATURE_SET_TEST_PATTERN:
-		set_test_pattern_mode((BOOL)*feature_data);
+		set_test_pattern_mode((UINT32)*feature_data);
 	break;
 	case SENSOR_FEATURE_GET_TEST_PATTERN_CHECKSUM_VALUE:
 	    *feature_return_para_32 = imgsensor_info.checksum_value;
@@ -2435,7 +2481,10 @@ static struct SENSOR_FUNCTION_STRUCT sensor_func = {
 UINT32 OV48B_MIPI_RAW_SensorInit(struct SENSOR_FUNCTION_STRUCT **pfFunc)
 {
 	/* To Do : Check Sensor status here */
+	sensor_func.arch = IMGSENSOR_ARCH_V2;
 	if (pfFunc != NULL)
 		*pfFunc =  &sensor_func;
+	if (imgsensor.psensor_func == NULL)
+		imgsensor.psensor_func = &sensor_func;
 	return ERROR_NONE;
 }

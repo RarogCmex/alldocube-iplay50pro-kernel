@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2019 MediaTek Inc.
- * Copyright (C) 2022 XiaoMi, Inc.
  */
 
 #include <linux/videodev2.h>
@@ -53,11 +52,13 @@ static void commit_write_sensor(struct subdrv_ctx *ctx)
 static void set_cmos_sensor(struct subdrv_ctx *ctx,
 			kal_uint16 reg, kal_uint16 val)
 {
-	if (_size_to_write > _I2C_BUF_SIZE - 2)
+	if (_size_to_write + 2 >= _I2C_BUF_SIZE)
 		commit_write_sensor(ctx);
 
-	_i2c_data[_size_to_write++] = reg;
-	_i2c_data[_size_to_write++] = val;
+	if (_size_to_write <= _I2C_BUF_SIZE - 2) {
+		_i2c_data[_size_to_write++] = reg;
+		_i2c_data[_size_to_write++] = val;
+	}
 }
 
 
@@ -2695,7 +2696,8 @@ static kal_uint16 gain2reg(struct subdrv_ctx *ctx, const kal_uint16 gain)
 
 static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 mode)
 {
-	DEBUG_LOG(ctx, "mode: %d\n", mode);
+	if (mode != ctx->test_pattern)
+		pr_debug("mode: %d\n", mode);
 
 	if (mode)
 		write_cmos_sensor(ctx, 0x0600, mode); /*100% Color bar*/
@@ -2709,7 +2711,8 @@ static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 mode)
 static kal_uint32 set_test_pattern_data(struct subdrv_ctx *ctx, struct mtk_test_pattern_data *data)
 {
 
-	pr_debug("test_patterndata mode = %d  R = %x, Gr = %x,Gb = %x,B = %x\n", ctx->test_pattern,
+	DEBUG_LOG(ctx, "test_patterndata mode = %d  R = %x, Gr = %x,Gb = %x,B = %x\n",
+		ctx->test_pattern,
 		data->Channel_R >> 22, data->Channel_Gr >> 22,
 		data->Channel_Gb >> 22, data->Channel_B >> 22);
 
@@ -2732,7 +2735,7 @@ static kal_int32 get_sensor_temperature(struct subdrv_ctx *ctx)
 
 	temperature = read_cmos_sensor_8(ctx, 0x013a);
 
-	if (temperature >= 0x0 && temperature <= 0x60)
+	if (temperature <= 0x60)
 		temperature_convert = temperature;
 	else if (temperature >= 0x61 && temperature <= 0x7F)
 		temperature_convert = 97;
@@ -3597,7 +3600,8 @@ static int get_resolution(struct subdrv_ctx *ctx,
 	int i = 0;
 
 	for (i = SENSOR_SCENARIO_ID_MIN; i < SENSOR_SCENARIO_ID_MAX; i++) {
-		if (i < imgsensor_info.sensor_mode_num) {
+		if (i < imgsensor_info.sensor_mode_num &&
+			i < ARRAY_SIZE(imgsensor_winsize_info)) {
 			sensor_resolution->SensorWidth[i] = imgsensor_winsize_info[i].w2_tg_size;
 			sensor_resolution->SensorHeight[i] = imgsensor_winsize_info[i].h2_tg_size;
 		} else {
@@ -4219,7 +4223,7 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 		/* night_mode((BOOL) *feature_data); */
 		break;
 	case SENSOR_FEATURE_SET_GAIN:
-		set_gain(ctx, (UINT32) *feature_data);
+		set_gain(ctx, (UINT32) * feature_data);
 		break;
 	case SENSOR_FEATURE_SET_FLASHLIGHT:
 		break;
@@ -4481,14 +4485,6 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 			 // *feature_return_para_32);
 		*feature_para_len = 4;
 		break;
-	case SENSOR_FEATURE_GET_AE_EFFECTIVE_FRAME_FOR_LE:
-		*feature_return_para_32 = ctx->current_ae_effective_frame;
-		break;
-	case SENSOR_FEATURE_GET_AE_FRAME_MODE_FOR_LE:
-		memcpy(feature_return_para_32,
-		       &ctx->ae_frm_mode,
-		       sizeof(struct IMGSENSOR_AE_FRM_MODE));
-		break;
 	case SENSOR_FEATURE_GET_MIPI_PIXEL_RATE:
 		switch (*feature_data) {
 		case SENSOR_SCENARIO_ID_NORMAL_CAPTURE:
@@ -4551,6 +4547,7 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 		default:
 			break;
 		}
+		break;
 	case SENSOR_FEATURE_SET_FRAMELENGTH:
 		set_frame_length(ctx, (UINT16) (*feature_data));
 		break;

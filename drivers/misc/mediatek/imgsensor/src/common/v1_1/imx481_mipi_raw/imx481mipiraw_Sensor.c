@@ -41,6 +41,8 @@
 #include "kd_imgsensor_errcode.h"
 
 #include "imx481mipiraw_Sensor.h"
+#include "platform_common.h"
+
 
 
 /************************************************************************
@@ -84,6 +86,8 @@ static void KD_SENSOR_PROFILE(char *tag)
 {
 }
 #endif
+
+static unsigned int g_platform_id;
 
 static DEFINE_SPINLOCK(imgsensor_drv_lock);
 
@@ -228,7 +232,7 @@ static struct imgsensor_struct imgsensor = {
 	 */
 	.autoflicker_en = KAL_FALSE,
 
-	.test_pattern = KAL_FALSE,
+	.test_pattern = 0,
 
 	/* current scenario id */
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,
@@ -270,14 +274,26 @@ static struct SENSOR_VC_INFO_STRUCT SENSOR_VC_INFO[4] = {
 	 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0000, 0x0000}
 };
 
+static struct IMGSENSOR_I2C_CFG *get_i2c_cfg(void)
+{
+	return &(((struct IMGSENSOR_SENSOR_INST *)
+		  (imgsensor.psensor_func->psensor_inst))->i2c_cfg);
+}
+
 static kal_uint16 read_cmos_sensor(kal_uint32 addr)
 {
 	kal_uint16 get_byte = 0;
 
 	char pu_send_cmd[2] = { (char)(addr >> 8), (char)(addr & 0xFF) };
 
-	iReadRegI2C(
-		pu_send_cmd, 2, (u8 *) &get_byte, 1, imgsensor.i2c_write_id);
+	imgsensor_i2c_read(
+		get_i2c_cfg(),
+		pu_send_cmd,
+		2,
+		(u8 *)&get_byte,
+		1,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 
 	return get_byte;
 }
@@ -287,8 +303,13 @@ static int write_cmos_sensor(kal_uint32 addr, kal_uint32 para)
 	char pu_send_cmd[3] = {
 		(char)(addr >> 8), (char)(addr & 0xFF), (char)(para & 0xFF) };
 
-	return iWriteRegI2CTiming(
-	    pu_send_cmd, 3, imgsensor.i2c_write_id, imgsensor_info.i2c_speed);
+	return imgsensor_i2c_write(
+		get_i2c_cfg(),
+		pu_send_cmd,
+		3,
+		3,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 }
 
 static void set_dummy(void)
@@ -301,8 +322,6 @@ static void set_dummy(void)
 
 	write_cmos_sensor(0x0340, imgsensor.frame_length >> 8);
 	write_cmos_sensor(0x0341, imgsensor.frame_length & 0xFF);
-	write_cmos_sensor(0x0342, imgsensor.line_length >> 8);
-	write_cmos_sensor(0x0343, imgsensor.line_length & 0xFF);
 
 	write_cmos_sensor(0x0104, 0x00);
 } /* set_dummy */
@@ -399,10 +418,10 @@ static void set_shutter(kal_uint32 shutter)
 
 	/* if shutter bigger than frame_length, extend frame length first */
 	spin_lock(&imgsensor_drv_lock);
-	if (shutter > imgsensor.min_frame_length - imgsensor_info.margin)
-		imgsensor.frame_length = shutter + imgsensor_info.margin;
-	else
-		imgsensor.frame_length = imgsensor.min_frame_length;
+	// if (shutter > imgsensor.min_frame_length - imgsensor_info.margin)
+		// imgsensor.frame_length = shutter + imgsensor_info.margin;
+	// else
+	imgsensor.frame_length = imgsensor.min_frame_length;
 	if (imgsensor.frame_length > imgsensor_info.max_frame_length)
 		imgsensor.frame_length = imgsensor_info.max_frame_length;
 	spin_unlock(&imgsensor_drv_lock);
@@ -428,7 +447,7 @@ static void set_shutter(kal_uint32 shutter)
 			l_shift = MAX_CIT_LSHIFT;
 		}
 		shutter = shutter >> l_shift;
-		imgsensor.frame_length = shutter + imgsensor_info.margin;
+		// imgsensor.frame_length = shutter + imgsensor_info.margin;
 		write_cmos_sensor(0x3100,
 		    read_cmos_sensor(0x3100) | (l_shift & 0x7));
 
@@ -444,7 +463,9 @@ static void set_shutter(kal_uint32 shutter)
 
 	if (imgsensor.autoflicker_en) {
 		realtime_fps =
-	imgsensor.pclk / imgsensor.line_length * 10 / imgsensor.frame_length;
+			imgsensor.pclk
+			/ imgsensor.line_length * 10
+			/ imgsensor.frame_length;
 
 		if (realtime_fps >= 297 && realtime_fps <= 305)
 			set_max_framerate(296, 0);
@@ -452,21 +473,6 @@ static void set_shutter(kal_uint32 shutter)
 			set_max_framerate(236, 0);
 		else if (realtime_fps >= 147 && realtime_fps <= 150)
 			set_max_framerate(146, 0);
-		else {
-			/* Extend frame length */
-			write_cmos_sensor(0x0104, 0x01);
-			write_cmos_sensor(0x0340, imgsensor.frame_length >> 8);
-			write_cmos_sensor(0x0341,
-				imgsensor.frame_length & 0xFF);
-
-			write_cmos_sensor(0x0104, 0x00);
-		}
-	} else {
-		/* Extend frame length */
-		write_cmos_sensor(0x0104, 0x01);
-		write_cmos_sensor(0x0340, imgsensor.frame_length >> 8);
-		write_cmos_sensor(0x0341, imgsensor.frame_length & 0xFF);
-		write_cmos_sensor(0x0104, 0x00);
 	}
 
 	/* Update Shutter */
@@ -512,8 +518,8 @@ static void set_shutter_frame_length(kal_uint16 shutter,
 
 	imgsensor.frame_length = imgsensor.frame_length + dummy_line;
 
-	if (shutter > imgsensor.frame_length - imgsensor_info.margin)
-		imgsensor.frame_length = shutter + imgsensor_info.margin;
+	// if (shutter > imgsensor.frame_length - imgsensor_info.margin)
+		// imgsensor.frame_length = shutter + imgsensor_info.margin;
 
 	if (imgsensor.frame_length > imgsensor_info.max_frame_length)
 		imgsensor.frame_length = imgsensor_info.max_frame_length;
@@ -703,11 +709,12 @@ static kal_uint16 imx481_table_write_cmos_sensor(
 		if ((I2C_BUFFER_LEN - tosend) < 3 ||
 		    len == IDX  ||
 		    addr != addr_last) {
-
-			iBurstWriteReg_multi(puSendCmd,
+			imgsensor_i2c_write(
+				get_i2c_cfg(),
+				puSendCmd,
 				tosend,
-				imgsensor.i2c_write_id,
 				3,
+				imgsensor.i2c_write_id,
 				imgsensor_info.i2c_speed);
 
 			tosend = 0;
@@ -1304,17 +1311,37 @@ static void slim_video_setting(void)
 	    sizeof(addr_data_pair_slim_video_imx481) / sizeof(kal_uint16));
 }
 
-static kal_uint32 set_test_pattern_mode(kal_bool enable)
+static kal_uint32 set_test_pattern_mode(kal_uint32 modes,
+		struct SET_SENSOR_PATTERN_SOLID_COLOR *pdata)
 {
-	pr_debug("enable: %d\n", enable);
+	kal_uint16 Color_R, Color_Gr, Color_Gb, Color_B;
 
-	if (enable)
-		write_cmos_sensor(0x0601, 0x02);
+	pr_debug("set_test_pattern enum: %d\n", modes);
+
+	if (modes) {
+		write_cmos_sensor(0x0601, modes);
+		if (modes == 1 && (pdata != NULL)) { //Solid Color
+			pr_debug("R=0x%x,Gr=0x%x,B=0x%x,Gb=0x%x",
+				pdata->COLOR_R, pdata->COLOR_Gr, pdata->COLOR_B, pdata->COLOR_Gb);
+			Color_R = (pdata->COLOR_R >> 22) & 0x3FF; //10bits depth color
+			Color_Gr = (pdata->COLOR_Gr >> 22) & 0x3FF;
+			Color_B = (pdata->COLOR_B >> 22) & 0x3FF;
+			Color_Gb = (pdata->COLOR_Gb >> 22) & 0x3FF;
+			write_cmos_sensor(0x0602, (Color_R >> 8) & 0x3);
+			write_cmos_sensor(0x0603, Color_R & 0xFF);
+			write_cmos_sensor(0x0604, (Color_Gr >> 8) & 0x3);
+			write_cmos_sensor(0x0605, Color_Gr & 0xFF);
+			write_cmos_sensor(0x0606, (Color_B >> 8) & 0x3);
+			write_cmos_sensor(0x0607, Color_B & 0xFF);
+			write_cmos_sensor(0x0608, (Color_Gb >> 8) & 0x3);
+			write_cmos_sensor(0x0609, Color_Gb & 0xFF);
+		}
+	}
 	else
-		write_cmos_sensor(0x0601, 0x00);
+		write_cmos_sensor(0x0601, 0x00); /*No pattern*/
 
 	spin_lock(&imgsensor_drv_lock);
-	imgsensor.test_pattern = enable;
+	imgsensor.test_pattern = modes;
 	spin_unlock(&imgsensor_drv_lock);
 	return ERROR_NONE;
 }
@@ -1347,8 +1374,8 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 		do {
 			*sensor_id = return_lot_id_from_otp();
 			if (*sensor_id == imgsensor_info.sensor_id) {
-				pr_debug("i2c write id: 0x%x, sensor id: 0x%x\n",
-					imgsensor.i2c_write_id, *sensor_id);
+				pr_info("[%s] i2c write id: 0x%x, sensor id: 0x%x\n",
+					__func__, imgsensor.i2c_write_id, *sensor_id);
 				return ERROR_NONE;
 			}
 			pr_debug(
@@ -1442,7 +1469,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.hdr_mode = 0;
-	imgsensor.test_pattern = KAL_FALSE;
+	imgsensor.test_pattern = 0;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 
@@ -2065,7 +2092,6 @@ static kal_uint32 imx481_awb_gain(struct SET_SENSOR_AWB_GAIN *pSetSensorAWB)
 {
 	UINT32 rgain_32, grgain_32, gbgain_32, bgain_32;
 
-	pr_debug("%s\n", __func__);
 
 	grgain_32 = (pSetSensorAWB->ABS_GAIN_GR << 8) >> 9;
 	rgain_32 = (pSetSensorAWB->ABS_GAIN_R << 8) >> 9;
@@ -2098,7 +2124,7 @@ static kal_uint32 get_sensor_temperature(void)
 
 	temperature = read_cmos_sensor(0x013a);
 
-	if (temperature >= 0x0 && temperature <= 0x4F)
+	if (temperature <= 0x4F)
 		temperature_convert = temperature;
 	else if (temperature >= 0x50 && temperature <= 0x7F)
 		temperature_convert = 80;
@@ -2135,6 +2161,10 @@ static kal_uint32 streaming_control(kal_bool enable)
 {
 	pr_debug("streaming_enable(0=Sw Standby,1=streaming): %d\n", enable);
 	if (enable) {
+		if (read_cmos_sensor(0x0350) != 0x01) {
+			pr_info("single cam scenario enable auto-extend");
+			write_cmos_sensor(0x0350, 0x01);
+		}
 		write_cmos_sensor(0x0100, 0X01);
 		check_stream_is_on();
 	} else
@@ -2206,6 +2236,10 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 				= imgsensor_info.pre.pclk;
 			break;
 		}
+		break;
+	case SENSOR_FEATURE_GET_OFFSET_TO_START_OF_EXPOSURE:
+		if (IS_MT6893(g_platform_id) || IS_MT6885(g_platform_id))
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = 1500000;
 		break;
 	case SENSOR_FEATURE_GET_PERIOD_BY_SCENARIO:
 		switch (*feature_data) {
@@ -2295,7 +2329,8 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		pr_debug("Please use EEPROM function\n");
 		break;
 	case SENSOR_FEATURE_SET_TEST_PATTERN:
-		set_test_pattern_mode((BOOL) (*feature_data));
+		set_test_pattern_mode((UINT32)*feature_data,
+		(struct SET_SENSOR_PATTERN_SOLID_COLOR *)(uintptr_t)(*(feature_data + 1)));
 		break;
 
 	/* for factory mode auto testing */
@@ -2426,7 +2461,7 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		*(feature_data + 2) = imgsensor_info.margin;
 		break;
 	case SENSOR_FEATURE_GET_VC_INFO:
-		pr_info("SENSOR_FEATURE_GET_VC_INFO %d\n",
+		pr_debug("SENSOR_FEATURE_GET_VC_INFO %d\n",
 			(UINT16) (*feature_data));
 
 		pvcinfo =
@@ -2460,13 +2495,20 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 	return ERROR_NONE;
 } /* feature_control */
 
+static void set_platform_info(unsigned int platform_id)
+{
+	g_platform_id = platform_id;
+	pr_info("%s id:%x\n", __func__, g_platform_id);
+}
+
 static struct SENSOR_FUNCTION_STRUCT sensor_func = {
 	open,
 	get_info,
 	get_resolution,
 	feature_control,
 	control,
-	close
+	close,
+	set_platform_info
 };
 
 
@@ -2474,7 +2516,10 @@ UINT32 IMX481_MIPI_RAW_SensorInit(
 			struct SENSOR_FUNCTION_STRUCT **pfFunc)
 {
 	/* To Do : Check Sensor status here */
+	sensor_func.arch = IMGSENSOR_ARCH_V2;
 	if (pfFunc != NULL)
 		*pfFunc = &sensor_func;
+	if (imgsensor.psensor_func == NULL)
+		imgsensor.psensor_func = &sensor_func;
 	return ERROR_NONE;
 } /* IMX481_MIPI_RAW_SensorInit */

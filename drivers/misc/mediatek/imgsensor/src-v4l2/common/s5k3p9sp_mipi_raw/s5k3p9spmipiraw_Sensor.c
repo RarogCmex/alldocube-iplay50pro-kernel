@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 MediaTek Inc.
-// Copyright (C) 2022 XiaoMi, Inc.
+
 /*****************************************************************************
  *
  * Filename:
@@ -77,7 +77,7 @@ static void commit_write_sensor(struct subdrv_ctx *ctx)
 static void set_cmos_sensor_16(struct subdrv_ctx *ctx,
 			kal_uint16 reg, kal_uint16 val)
 {
-	if (_size_to_write > _I2C_BUF_SIZE - 2)
+	if (_size_to_write + 2 >= _I2C_BUF_SIZE)
 		commit_write_sensor(ctx);
 
 	_i2c_data[_size_to_write++] = reg;
@@ -128,14 +128,14 @@ static struct imgsensor_info_struct imgsensor_info = {
 		},
 		.normal_video = {
 			.pclk = 560000000,
-			.linelength = 12960,
-			.framelength = 1440,
+			.linelength = 11520,
+			.framelength = 1616,
 			.startx = 0,
 			.starty = 0,
-			.grabwindow_width = 1920,
-			.grabwindow_height = 1080,
+			.grabwindow_width = 2320,
+			.grabwindow_height = 1306,
 			.mipi_data_lp2hs_settle_dc = 85,
-			.mipi_pixel_rate = 216666667,
+			.mipi_pixel_rate = 307200000,
 			.max_framerate = 300,
 		},
 		.hs_video = {
@@ -189,7 +189,7 @@ static struct imgsensor_info_struct imgsensor_info = {
 		.mipi_sensor_type = MIPI_OPHY_NCSI2,
 		.mipi_settle_delay_mode = 1,
 		.sensor_output_dataformat =
-			SENSOR_OUTPUT_FORMAT_RAW_4CELL_Gr,
+			SENSOR_OUTPUT_FORMAT_RAW_4CELL_BAYER_Gr,
 		.mclk = 24,
 		.mipi_lane_num = SENSOR_MIPI_4_LANE,
 		.i2c_addr_table = {0x20, 0xff},
@@ -208,8 +208,8 @@ static struct SENSOR_WINSIZE_INFO_STRUCT imgsensor_winsize_info[5] = {
 	{4640, 3488,    0,    0, 4640, 3488, 2320, 1744,
 	    0,    0, 2320, 1744,    0,    0, 2320, 1744},/* Capture == Preview*/
 #endif
-	{4640, 3488,  400,  664, 3840, 2160, 1920, 1080,
-	    0,    0, 1920, 1080,    0,    0, 1920, 1080},/* Video */
+	{4640, 3488, 0000,  438, 4640, 2612, 2320, 1306,
+	 0000, 0000, 2320, 1306,    0,    0, 2320, 1306},/* Video */
 	{4640, 3488,  400,  664, 3840, 2160, 1920, 1080,
 	    0,    0, 1920, 1080,    0,    0, 1920, 1080},/* hs_video == Video */
 	{4640, 3488, 1024,  784, 2592, 1920, 1296,  960,
@@ -638,7 +638,7 @@ static void slim_video_setting(struct subdrv_ctx *ctx)
 		   sizeof(addr_data_pair_slim_video) / sizeof(kal_uint16));
 }	/*	slim_video_setting  */
 
-#define FOUR_CELL_SIZE 3072
+#define FOUR_CELL_SIZE 2048
 #define FOUR_CELL_ADDR 0x150F
 static char four_cell_data[FOUR_CELL_SIZE + 2];
 static void read_four_cell_from_eeprom(struct subdrv_ctx *ctx, char *data)
@@ -648,7 +648,7 @@ static void read_four_cell_from_eeprom(struct subdrv_ctx *ctx, char *data)
 
 	if (data != NULL) {
 		LOG_INF("return data\n");
-		memcpy(data, four_cell_data, FOUR_CELL_SIZE);
+		memcpy(data, four_cell_data, FOUR_CELL_SIZE + 2);
 	} else {
 		LOG_INF("need to read from EEPROM\n");
 		/* Check I2C is normal */
@@ -661,9 +661,10 @@ static void read_four_cell_from_eeprom(struct subdrv_ctx *ctx, char *data)
 		four_cell_data[0] = (FOUR_CELL_SIZE & 0xFF);/*Low*/
 		four_cell_data[1] = ((FOUR_CELL_SIZE >> 8) & 0xFF);/*High*/
 		/*Multi-Read*/
-		for (i = 2; i < (FOUR_CELL_SIZE + 2); i++)
+		for (i = 0; i < FOUR_CELL_SIZE; i++)
 			adaptor_i2c_rd_u8(ctx->i2c_client,
-				S5K3P9SP_EEPROM_READ_ID >> 1, FOUR_CELL_ADDR, &four_cell_data[i]);
+				S5K3P9SP_EEPROM_READ_ID >> 1,
+				FOUR_CELL_ADDR + i, &four_cell_data[i+2]);
 		ctx->is_read_four_cell = 1;
 	}
 }
@@ -945,7 +946,8 @@ static int get_resolution(struct subdrv_ctx *ctx,
 	int i = 0;
 
 	for (i = SENSOR_SCENARIO_ID_MIN; i < SENSOR_SCENARIO_ID_MAX; i++) {
-		if (i < imgsensor_info.sensor_mode_num) {
+		if (i < imgsensor_info.sensor_mode_num &&
+			i < ARRAY_SIZE(imgsensor_winsize_info)) {
 			sensor_resolution->SensorWidth[i] = imgsensor_winsize_info[i].w2_tg_size;
 			sensor_resolution->SensorHeight[i] = imgsensor_winsize_info[i].h2_tg_size;
 		} else {
@@ -1231,7 +1233,8 @@ static kal_uint32 get_default_framerate_by_scenario(struct subdrv_ctx *ctx,
 
 static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 mode)
 {
-	DEBUG_LOG(ctx, "mode: %d\n", mode);
+	if (mode != ctx->test_pattern)
+		pr_debug("mode: %d\n", mode);
 
 	if (mode)
 		write_cmos_sensor_16(ctx, 0x0600, mode); /*100% Color bar*/
@@ -1245,7 +1248,8 @@ static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 mode)
 static kal_uint32 set_test_pattern_data(struct subdrv_ctx *ctx, struct mtk_test_pattern_data *data)
 {
 
-	pr_debug("test_patterndata mode = %d  R = %x, Gr = %x,Gb = %x,B = %x\n", ctx->test_pattern,
+	DEBUG_LOG(ctx, "test_patterndata mode = %d  R = %x, Gr = %x,Gb = %x,B = %x\n",
+		ctx->test_pattern,
 		data->Channel_R >> 22, data->Channel_Gr >> 22,
 		data->Channel_Gb >> 22, data->Channel_B >> 22);
 
@@ -1269,8 +1273,6 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 	UINT32 *feature_return_para_32 = (UINT32 *) feature_para;
 	UINT32 *feature_data_32 = (UINT32 *) feature_para;
 	unsigned long long *feature_data = (unsigned long long *) feature_para;
-	char *data = (char *)(uintptr_t)(*(feature_data + 1));
-	UINT16 type = (UINT16)(*feature_data);
 
 	struct SET_PD_BLOCK_INFO_T *PDAFinfo;
 	struct SENSOR_WINSIZE_INFO_STRUCT *wininfo;
@@ -1399,7 +1401,7 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 		/*night_mode(ctx, (BOOL) *feature_data);*/
 		break;
 	case SENSOR_FEATURE_SET_GAIN:
-		set_gain(ctx, (UINT32) *feature_data);
+		set_gain(ctx, (UINT32) * feature_data);
 		break;
 	case SENSOR_FEATURE_SET_FLASHLIGHT:
 		break;
@@ -1545,14 +1547,18 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 		*(feature_data + 2) = imgsensor_info.margin;
 		break;
 	case SENSOR_FEATURE_GET_4CELL_DATA:
-		/*get 4 cell data from eeprom*/
-		if (type == FOUR_CELL_CAL_TYPE_XTALK_CAL) {
-			LOG_DEBUG("Read Cross Talk Start");
-			read_four_cell_from_eeprom(ctx, data);
-			LOG_DEBUG("Read Cross Talk = %02x %02x %02x %02x %02x %02x\n",
-				(UINT16)data[0], (UINT16)data[1],
-				(UINT16)data[2], (UINT16)data[3],
-				(UINT16)data[4], (UINT16)data[5]);
+		{
+			char *data = (char *)(uintptr_t)(*(feature_data + 1));
+			UINT16 type = (UINT16)(*feature_data);
+			/*get 4 cell data from eeprom*/
+			if (type == FOUR_CELL_CAL_TYPE_XTALK_CAL) {
+				LOG_DEBUG("Read Cross Talk Start");
+				read_four_cell_from_eeprom(ctx, data);
+				LOG_DEBUG("Read Cross Talk = %02x %02x %02x %02x %02x %02x\n",
+					(UINT16)data[0], (UINT16)data[1],
+					(UINT16)data[2], (UINT16)data[3],
+					(UINT16)data[4], (UINT16)data[5]);
+			}
 		}
 		break;
 	case SENSOR_FEATURE_SET_STREAMING_SUSPEND:

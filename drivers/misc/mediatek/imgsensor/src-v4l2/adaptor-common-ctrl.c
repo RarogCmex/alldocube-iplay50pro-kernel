@@ -18,7 +18,7 @@ int g_stagger_info(struct adaptor_ctx *ctx,
 						  struct mtk_stagger_info *info)
 {
 	int ret = 0;
-	struct mtk_mbus_frame_desc fd;
+	struct mtk_mbus_frame_desc fd = {0};
 	int hdr_cnt = 0;
 	unsigned int i = 0;
 
@@ -28,7 +28,7 @@ int g_stagger_info(struct adaptor_ctx *ctx,
 	if (info->scenario_id != SENSOR_SCENARIO_ID_NONE)
 		scenario = info->scenario_id;
 
-	dev_info(ctx->dev, " %s scenario %d %d\n", __func__, scenario, info->scenario_id);
+	// dev_info(ctx->dev, " %s scenario %d %d\n", __func__, scenario, info->scenario_id);
 
 	ret = subdrv_call(ctx, get_frame_desc, scenario, &fd);
 
@@ -45,7 +45,7 @@ int g_stagger_info(struct adaptor_ctx *ctx,
 	}
 
 	info->count = hdr_cnt;
-	dev_info(ctx->dev, " %s after %d %d\n", __func__, info->count, info->scenario_id);
+	// dev_info(ctx->dev, " %s after %d %d\n", __func__, info->count, info->scenario_id);
 
 	return ret;
 }
@@ -112,4 +112,16 @@ int g_max_exposure_line(struct adaptor_ctx *ctx,
 	info->max_exp_line = (u32)para.u64[2];
 
 	return 0;
+}
+
+int g_scenario_exposure_cnt(struct adaptor_ctx *ctx,
+				   int scenario)
+{
+	int ret = 0;
+	struct mtk_stagger_info info = {0};
+
+	info.scenario_id = scenario;
+	ret = g_stagger_info(ctx, scenario, &info);
+
+	return max_t(__u32, info.count, 1);
 }

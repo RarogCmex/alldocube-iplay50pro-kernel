@@ -20,6 +20,7 @@
  ****************************************************************************/
 #ifndef _S5K3M5SXMIPI_SENSOR_H
 #define _S5K3M5SXMIPI_SENSOR_H
+#include "imgsensor_sensor.h"
 
 
 enum IMGSENSOR_MODE {
@@ -75,7 +76,7 @@ struct imgsensor_struct {
 
 	kal_uint16 current_fps; /* current max fps */
 	kal_bool autoflicker_en; /* record autoflicker enable or disable */
-	kal_bool test_pattern; /* record test pattern mode or not */
+	kal_uint32 test_pattern; /* record test pattern mode or not */
 	enum MSDK_SCENARIO_ID_ENUM current_scenario_id;
 	kal_bool ihdr_en; /* ihdr enable or disable */
 	kal_uint8 ihdr_mode; /* ihdr enable or disable */
@@ -83,6 +84,7 @@ struct imgsensor_struct {
 	kal_uint8 i2c_write_id; /* record current sensor's i2c write id */
 	struct IMGSENSOR_AE_FRM_MODE ae_frm_mode;
 	kal_uint8 current_ae_effective_frame;
+	struct SENSOR_FUNCTION_STRUCT *psensor_func;
 };
 
 

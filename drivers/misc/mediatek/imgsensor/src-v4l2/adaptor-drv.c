@@ -18,6 +18,7 @@
 #include "adaptor-i2c.h"
 #include "adaptor-ctrls.h"
 #include "adaptor-ioctl.h"
+#include "adaptor-trace.h"
 #include "imgsensor-glue/imgsensor-glue.h"
 #include "virt-sensor/virt-sensor-entry.h"
 
@@ -178,6 +179,13 @@ static void add_sensor_mode(struct adaptor_ctx *ctx,
 		para.u8, &len);
 	mode->fine_intg_line = val;
 
+	val = 0;
+	subdrv_call(ctx, feature_control,
+		SENSOR_FEATURE_ESD_RESET_BY_USER,
+		para.u8, &len);
+
+	mode->esd_reset_by_user = val;
+
 
 	if (!mode->mipi_pixel_rate || !mode->max_framerate || !mode->pclk)
 		return;
@@ -245,22 +253,8 @@ static int set_sensor_mode(struct adaptor_ctx *ctx,
 		struct sensor_mode *mode, char update_ctrl_defs)
 {
 	s64 min, max, def;
-#ifdef __XIAOMI_CAMERA__
-	u32 update_seamless = 0;
-	union feature_para para;
-	u32 len;
-#endif
 
 	if (ctx->cur_mode == mode) {
-#ifdef __XIAOMI_CAMERA__
-		para.u32[0] = 0;
-		subdrv_call(ctx, feature_control,
-			XIAOMI_FEATURE_GET_NEED_UPDATE_SEAMLESS_SETTING,
-			para.u8, &len);
-		update_seamless = para.u32[0];
-		if (update_seamless)
-			ctx->is_sensor_scenario_inited = 0;
-#endif
 		if (update_ctrl_defs)
 			control_sensor(ctx);
 		return 0;
@@ -408,7 +402,6 @@ static int imgsensor_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
 	dev_info(ctx->dev, "%s use self ref cnt\n", __func__);
 	adaptor_hw_power_on(ctx);
 #endif
-
 	adaptor_sensor_init(ctx);
 #endif
 
@@ -575,6 +568,7 @@ static int imgsensor_set_pad_format(struct v4l2_subdev *sd,
 	set_std_parts_fmt_code(fmt->format.code, ctx->fmt_code);
 
 
+	/* Returns the best match or NULL if the Length of the array is zero */
 	mode = v4l2_find_nearest_size(ctx->mode,
 		ctx->mode_cnt, width, height,
 		fmt->format.width, fmt->format.height);
@@ -585,8 +579,20 @@ static int imgsensor_set_pad_format(struct v4l2_subdev *sd,
 		if (sensor_mode_id >= 0 && sensor_mode_id < ctx->mode_cnt)
 			mode = &ctx->mode[sensor_mode_id];
 	}
-	dev_info(ctx->dev, "set fmt code = 0x%x, which %d sensor_mode_id = %u\n",
-			fmt->format.code, fmt->which, mode->id);
+
+	if (mode == NULL) {
+		dev_info(ctx->dev,
+			"set fmt code = 0x%x, which %d ctx->mode_cnt = %d\n",
+			fmt->format.code, fmt->which, ctx->mode_cnt);
+
+		mutex_unlock(&ctx->mutex);
+		return -EINVAL;
+	}
+
+	dev_info(ctx->dev,
+		"set fmt code = 0x%x, which %d sensor_mode_id = %u\n",
+		fmt->format.code, fmt->which, mode->id);
+
 
 	update_pad_format(ctx, mode, fmt);
 	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY) {
@@ -596,9 +602,13 @@ static int imgsensor_set_pad_format(struct v4l2_subdev *sd,
 		ctx->try_format_mode = mode;
 	} else {
 #ifndef POWERON_ONCE_OPENED
+		ADAPTOR_SYSTRACE_BEGIN("imgsensor::init_sensor");
 		adaptor_sensor_init(ctx);
+		ADAPTOR_SYSTRACE_END();
 #endif
+		ADAPTOR_SYSTRACE_BEGIN("imgsensor::set_mode_%u", mode->id);
 		set_sensor_mode(ctx, mode, 1);
+		ADAPTOR_SYSTRACE_END();
 	}
 	mutex_unlock(&ctx->mutex);
 
@@ -722,6 +732,7 @@ static int imgsensor_start_streaming(struct adaptor_ctx *ctx)
 //	int ret;
 	u64 data[4];
 	u32 len;
+	union feature_para para;
 
 	adaptor_sensor_init(ctx);
 
@@ -735,6 +746,11 @@ static int imgsensor_start_streaming(struct adaptor_ctx *ctx)
 #endif
 
 	data[0] = 0; // shutter
+	para.u8[0] = 0;
+	//Make sure close test pattern
+	subdrv_call(ctx, feature_control,
+		SENSOR_FEATURE_SET_TEST_PATTERN,
+		para.u8, &len);
 	subdrv_call(ctx, feature_control,
 		SENSOR_FEATURE_SET_STREAMING_RESUME,
 		(u8 *)data, &len);
@@ -1119,7 +1135,8 @@ static ssize_t debug_i2c_ops_store(struct device *dev,
 	char *token = NULL;
 	char *sbuf = kzalloc(sizeof(char) * (count + 1), GFP_KERNEL);
 	char *s = sbuf;
-	int ret, num_para = 0;
+	int ret;
+	unsigned int num_para = 0;
 	char *arg[DBG_ARG_IDX_MAX_NUM];
 	struct adaptor_ctx *ctx = to_ctx(dev_get_drvdata(dev));
 	u32 val;
@@ -1144,7 +1161,7 @@ static ssize_t debug_i2c_ops_store(struct device *dev,
 	}
 
 	if (num_para > DBG_ARG_IDX_MAX_NUM) {
-		dev_info(dev, "Wrong command parameter number %d\n", num_para);
+		dev_info(dev, "Wrong command parameter number %u\n", num_para);
 		goto ERR_DEBUG_OPS_STORE;
 	}
 	ret = kstrtouint(arg[DBG_ARG_IDX_I2C_ADDR], 0, &reg);
@@ -1187,11 +1204,13 @@ static DEVICE_ATTR_RW(debug_i2c_ops);
 
 static int imgsensor_probe(struct i2c_client *client)
 {
+
 	struct device *dev = &client->dev;
 	struct device_node *endpoint;
 	struct adaptor_ctx *ctx;
 	int ret;
-
+	int forbid_index;
+	dev_info(dev, "imgsensor_probe success\n");
 	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
@@ -1246,7 +1265,11 @@ static int imgsensor_probe(struct i2c_client *client)
 	ctx->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ctx->sd.dev = &client->dev;
 	ctx->sd.entity.function = MEDIA_ENT_F_CAM_SENSOR;
-
+	ctx->forbid_idx = -1;
+	if (!of_property_read_u32(dev->of_node, "forbid-index", &forbid_index)) {
+		ctx->forbid_idx = forbid_index;
+		dev_info(dev, "not support to power on with sensor%d\n", ctx->forbid_idx);
+	}
 
 	/* init subdev name */
 	snprintf(ctx->sd.name, V4L2_SUBDEV_NAME_SIZE, "%s",
@@ -1356,12 +1379,7 @@ static const struct i2c_device_id imgsensor_id[] = {
 MODULE_DEVICE_TABLE(i2c, imgsensor_id);
 
 static const struct of_device_id imgsensor_of_match[] = {
-	{.compatible = "mediatek,imgsensor0"},
-	{.compatible = "mediatek,imgsensor1"},
-	{.compatible = "mediatek,imgsensor2"},
-	{.compatible = "mediatek,imgsensor3"},
-	{.compatible = "mediatek,imgsensor4"},
-	{.compatible = "mediatek,imgsensor5"},
+	{.compatible = "mediatek,imgsensor"},
 	{}
 };
 MODULE_DEVICE_TABLE(of, imgsensor_of_match);
@@ -1382,7 +1400,6 @@ static struct i2c_driver imgsensor_i2c_driver = {
 static int __init adaptor_drv_init(void)
 {
 	i2c_add_driver(&imgsensor_i2c_driver);
-
 	return 0;
 }
 

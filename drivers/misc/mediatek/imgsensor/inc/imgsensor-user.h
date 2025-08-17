@@ -208,13 +208,11 @@ struct mtk_hdr_ae {
 	struct mtk_hdr_gain gain;
 	__u32 actions;
 	__u32 subsample_tags;
+	int req_id;
 };
 
 struct mtk_seamless_switch_param {
 	struct mtk_hdr_ae ae_ctrl[2];
-#ifdef __XIAOMI_CAMERA__
-	struct mtk_awb_gain awb_gain;
-#endif
 	__u32 frame_length[2];
 	__u32 target_scenario_id;
 };
@@ -540,10 +538,5 @@ struct mtk_fine_integ_line {
 
 #define VIDIOC_MTK_S_TG \
 	_IOW('M', BASE_VIDIOC_PRIVATE + 110, int)
-
-#ifdef __XIAOMI_CAMERA__
-#define VIDIOC_XIAOMI_S_ENABLE_SEAMLESS_SWITCH \
-	_IOW('M', BASE_VIDIOC_PRIVATE + 300, __u32)
-#endif
 
 #endif

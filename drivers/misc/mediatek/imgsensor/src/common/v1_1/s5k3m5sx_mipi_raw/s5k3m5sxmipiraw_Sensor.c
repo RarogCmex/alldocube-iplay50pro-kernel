@@ -38,6 +38,7 @@
 #include "kd_imgsensor_errcode.h"
 
 #include "s5k3m5sxmipiraw_Sensor.h"
+#include "platform_common.h"
 
 
 #undef VENDOR_EDIT
@@ -55,6 +56,7 @@
 	#define I2C_BUFFER_LEN 1020 /* trans# max is 255, each 4 bytes */
 #endif
 
+static unsigned int g_platform_id;
 
 #ifdef VENDOR_EDIT
 #define MODULE_ID_OFFSET 0x0000
@@ -1741,18 +1743,32 @@ static struct imgsensor_struct imgsensor = {
 	.dummy_line = 0,	/* current dummyline */
 	.current_fps = 300,
 	.autoflicker_en = KAL_FALSE,
-	.test_pattern = KAL_FALSE,
+	.test_pattern = 0,
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,
 	.ihdr_mode = 0, /* sensor need support LE, SE with HDR feature */
 	.i2c_write_id = 0x34, /* record current sensor's i2c write id */
 	.current_ae_effective_frame = 2,
 };
+
+static struct IMGSENSOR_I2C_CFG *get_i2c_cfg(void)
+{
+	return &(((struct IMGSENSOR_SENSOR_INST *)
+		  (imgsensor.psensor_func->psensor_inst))->i2c_cfg);
+}
+
 static kal_uint16 read_cmos_sensor(kal_uint32 addr)
 {
 	kal_uint16 get_byte = 0;
 	char pusendcmd[2] = {(char)(addr >> 8), (char)(addr & 0xFF)};
 
-	iReadRegI2C(pusendcmd, 2, (u8 *)&get_byte, 2, imgsensor.i2c_write_id);
+	imgsensor_i2c_read(
+		get_i2c_cfg(),
+		pusendcmd,
+		2,
+		(u8 *)&get_byte,
+		2,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 	return ((get_byte<<8)&0xff00) | ((get_byte>>8)&0x00ff);
 }
 
@@ -1761,7 +1777,14 @@ static kal_uint16 read_cmos_sensor_8(kal_uint16 addr)
 	kal_uint16 get_byte = 0;
 	char pusendcmd[2] = {(char)(addr >> 8), (char)(addr & 0xFF) };
 
-	iReadRegI2C(pusendcmd, 2, (u8 *)&get_byte, 1, imgsensor.i2c_write_id);
+	imgsensor_i2c_read(
+		get_i2c_cfg(),
+		pusendcmd,
+		2,
+		(u8 *)&get_byte,
+		1,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 	return get_byte;
 }
 
@@ -1770,7 +1793,13 @@ static void write_cmos_sensor_8(kal_uint16 addr, kal_uint8 para)
 	char pusendcmd[3] = {(char)(addr >> 8), (char)(addr & 0xFF),
 			(char)(para & 0xFF)};
 
-	iWriteRegI2C(pusendcmd, 3, imgsensor.i2c_write_id);
+	imgsensor_i2c_write(
+		get_i2c_cfg(),
+		pusendcmd,
+		3,
+		3,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 }
 
 
@@ -1778,7 +1807,13 @@ static void write_cmos_sensor(kal_uint16 addr, kal_uint16 para)
 {
 	char pusendcmd[4] = {
 	(char)(addr >> 8), (char)(addr & 0xFF), (char)(para >> 8), (char)(para & 0xFF) };
-	iWriteRegI2C(pusendcmd, 4, imgsensor.i2c_write_id);
+	imgsensor_i2c_write(
+		get_i2c_cfg(),
+		pusendcmd,
+		4,
+		4,
+		imgsensor.i2c_write_id,
+		IMGSENSOR_I2C_SPEED);
 
 }
 
@@ -1811,20 +1846,25 @@ static kal_uint16 table_write_cmos_sensor(kal_uint16 *para, kal_uint32 len)
 			 * or reach end of data
 			 */
 			if ((I2C_BUFFER_LEN - tosend) < 3 || IDX == len || addr != addr_last) {
-				iBurstWriteReg_multi(puSendCmd,
+				imgsensor_i2c_write(
+							get_i2c_cfg(),
+							pusendcmd,
 							tosend,
-							imgsensor.i2c_write_id,
 							3,
+							imgsensor.i2c_write_id,
 							imgsensor_info.i2c_speed);
 				tosend = 0;
 			}
 
 		#elif MULTI_WRITE_REGISTER_VALUE == 16
 			if ((I2C_BUFFER_LEN - tosend) < 4 || len == IDX || addr != addr_last) {
-				iBurstWriteReg_multi(puSendCmd,
-					tosend,
-					imgsensor.i2c_write_id,
-					4, imgsensor_info.i2c_speed);
+				imgsensor_i2c_write(
+						get_i2c_cfg(),
+						puSendCmd,
+						tosend,
+						4,
+						imgsensor.i2c_write_id,
+						imgsensor_info.i2c_speed);
 
 				tosend = 0;
 			}
@@ -1883,17 +1923,35 @@ static kal_uint16 gain2reg(const kal_uint16 gain)
 
 
 
-static kal_uint32 set_test_pattern_mode(kal_bool enable)
+static kal_uint32 set_test_pattern_mode(kal_uint32 modes,
+	struct SET_SENSOR_PATTERN_SOLID_COLOR *pdata)
 {
-	LOG_INF("enable: %d\n", enable);
+	kal_uint16 Color_R, Color_Gr, Color_Gb, Color_B;
 
-	if (enable)
-		write_cmos_sensor(0x0600, 0x0003); /*100% Color bar*/
-	else
+	LOG_INF("set_test_pattern enum: %d\n", modes);
+	if (modes) {
+		write_cmos_sensor(0x0600, modes);
+		if (modes == 1 && (pdata != NULL)) { //Solid Color
+			pr_debug("R=0x%x,Gr=0x%x,B=0x%x,Gb=0x%x",
+				pdata->COLOR_R, pdata->COLOR_Gr, pdata->COLOR_B, pdata->COLOR_Gb);
+			Color_R = (pdata->COLOR_R >> 22) & 0x3FF; //10bits depth color
+			Color_Gr = (pdata->COLOR_Gr >> 22) & 0x3FF;
+			Color_B = (pdata->COLOR_B >> 22) & 0x3FF;
+			Color_Gb = (pdata->COLOR_Gb >> 22) & 0x3FF;
+			//write_cmos_sensor(0x0603, (Color_R >> 8) & 0x3);
+			write_cmos_sensor(0x0602, Color_R & 0x3FF);
+			//write_cmos_sensor(0x0605, (Color_Gr >> 8) & 0x3);
+			write_cmos_sensor(0x0604, Color_Gr & 0x3FF);
+			//write_cmos_sensor(0x0607, (Color_B >> 8) & 0x3);
+			write_cmos_sensor(0x0606, Color_B & 0x3FF);
+			//write_cmos_sensor(0x0609, (Color_Gb >> 8) & 0x3);
+			write_cmos_sensor(0x0608, Color_Gb & 0x3FF);
+		}
+	} else
 		write_cmos_sensor(0x0600, 0x0000); /*No pattern*/
 
 	spin_lock(&imgsensor_drv_lock);
-	imgsensor.test_pattern = enable;
+	imgsensor.test_pattern = modes;
 	spin_unlock(&imgsensor_drv_lock);
 	return ERROR_NONE;
 }
@@ -1906,7 +1964,7 @@ static kal_int32 get_sensor_temperature(void)
 
 	temperature = read_cmos_sensor_8(0x013a);
 
-	if (temperature >= 0x0 && temperature <= 0x60)
+	if (temperature <= 0x60)
 		temperature_convert = temperature;
 	else if (temperature >= 0x61 && temperature <= 0x7F)
 		temperature_convert = 97;
@@ -2349,8 +2407,8 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 		do {
 			*sensor_id = return_sensor_id();
 			if (*sensor_id == imgsensor_info.sensor_id) {
-				LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n",
-						imgsensor.i2c_write_id, *sensor_id);
+				pr_info("[%s] i2c write id: 0x%x, sensor id: 0x%x\n",
+					__func__, imgsensor.i2c_write_id, *sensor_id);
 				return ERROR_NONE;
 			}
 			LOG_INF("Read sensor id fail, id: 0x%x\n", imgsensor.i2c_write_id);
@@ -2399,7 +2457,7 @@ static kal_uint32 open(void)
 		imgsensor.i2c_write_id = imgsensor_info.i2c_addr_table[i];
 		spin_unlock(&imgsensor_drv_lock);
 		do {
-			get_imgsensor_id(&sensor_id);
+			sensor_id = return_sensor_id();
 			if (sensor_id == imgsensor_info.sensor_id) {
 				LOG_INF("i2c write id: 0x%x, sensor id: 0x%x\n",
 					imgsensor.i2c_write_id, sensor_id);
@@ -2432,7 +2490,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_mode = 0;
-	imgsensor.test_pattern = KAL_FALSE;
+	imgsensor.test_pattern = 0;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 
@@ -3051,23 +3109,17 @@ static kal_uint32 set_max_framerate_by_scenario(
 			set_dummy();
 		break;
 	case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
-		if (imgsensor.current_fps != imgsensor_info.cap.max_framerate) {
-			LOG_INF(
-			"Warning: current_fps %d fps is not support, so use cap's setting: %d fps!\n"
-			, framerate, imgsensor_info.cap.max_framerate/10);
 		frame_length = imgsensor_info.cap.pclk / framerate * 10
 				/ imgsensor_info.cap.linelength;
 		spin_lock(&imgsensor_drv_lock);
-			imgsensor.dummy_line =
+		imgsensor.dummy_line =
 			(frame_length > imgsensor_info.cap.framelength)
-			  ? (frame_length - imgsensor_info.cap.framelength) : 0;
-			imgsensor.frame_length =
-				imgsensor_info.cap.framelength
-				+ imgsensor.dummy_line;
-			imgsensor.min_frame_length = imgsensor.frame_length;
-			spin_unlock(&imgsensor_drv_lock);
-	}
-
+		? (frame_length - imgsensor_info.cap.framelength) : 0;
+		imgsensor.frame_length =
+			imgsensor_info.cap.framelength
+			+ imgsensor.dummy_line;
+		imgsensor.min_frame_length = imgsensor.frame_length;
+		spin_unlock(&imgsensor_drv_lock);
 		if (imgsensor.frame_length > imgsensor.shutter)
 			set_dummy();
 		break;
@@ -3382,7 +3434,8 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		}
 		break;
 	case SENSOR_FEATURE_GET_OFFSET_TO_START_OF_EXPOSURE:
-		*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = 3000000;
+		if (IS_MT6893(g_platform_id) || IS_MT6885(g_platform_id))
+			*(MUINT32 *)(uintptr_t)(*(feature_data + 1)) = 1755200;
 		break;
 	case SENSOR_FEATURE_GET_PERIOD:
 		*feature_return_para_16++ = imgsensor.line_length;
@@ -3456,7 +3509,8 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		#endif
 		break;
 	case SENSOR_FEATURE_SET_TEST_PATTERN:
-		set_test_pattern_mode((BOOL)*feature_data);
+		set_test_pattern_mode((UINT32)*feature_data,
+		(struct SET_SENSOR_PATTERN_SOLID_COLOR *)(uintptr_t)(*(feature_data + 1)));
 		break;
 	case SENSOR_FEATURE_GET_TEST_PATTERN_CHECKSUM_VALUE:
 		/* for factory mode auto testing */
@@ -3671,8 +3725,6 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		switch (*(feature_data + 1)) {
 		case MSDK_SCENARIO_ID_CAMERA_CAPTURE_JPEG:
 		case MSDK_SCENARIO_ID_CUSTOM1:
-			*feature_return_para_32 = 1; /*BINNING_NONE*/
-			break;
 		case MSDK_SCENARIO_ID_CAMERA_PREVIEW:
 		case MSDK_SCENARIO_ID_VIDEO_PREVIEW:
 		case MSDK_SCENARIO_ID_HIGH_SPEED_VIDEO:
@@ -3682,7 +3734,7 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 		case MSDK_SCENARIO_ID_CUSTOM4:
 		case MSDK_SCENARIO_ID_CUSTOM5:
 		default:
-			*feature_return_para_32 = 2; /*BINNING_AVERAGED*/
+			*feature_return_para_32 = 1; /*BINNING_AVERAGED*/
 			break;
 		}
 		pr_debug("SENSOR_FEATURE_GET_BINNING_TYPE AE_binning_type:%d,\n",
@@ -3741,10 +3793,8 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 	break;
 
 	case SENSOR_FEATURE_GET_VC_INFO:
-	#if 0
 		LOG_INF("SENSOR_FEATURE_GET_VC_INFO %d\n",
 			(UINT16)*feature_data);
-	#endif
 		pvcinfo =
 		 (struct SENSOR_VC_INFO_STRUCT *)(uintptr_t)(*(feature_data+1));
 		switch (*feature_data_32) {
@@ -3774,20 +3824,30 @@ static kal_uint32 feature_control(MSDK_SENSOR_FEATURE_ENUM feature_id,
 	return ERROR_NONE;
 } /* feature_control() */
 
+static void set_platform_info(unsigned int platform_id)
+{
+	g_platform_id = platform_id;
+	pr_info("%s id:%x\n", __func__, g_platform_id);
+}
+
 static struct SENSOR_FUNCTION_STRUCT sensor_func = {
 	open,
 	get_info,
 	get_resolution,
 	feature_control,
 	control,
-	close
+	close,
+	set_platform_info
 };
 
 
 UINT32 S5K3M5SX_MIPI_RAW_SensorInit(struct SENSOR_FUNCTION_STRUCT **pfFunc)
 {
 	/* To Do : Check Sensor status here */
+	sensor_func.arch = IMGSENSOR_ARCH_V2;
 	if (pfFunc != NULL)
 		*pfFunc = &sensor_func;
+	if (imgsensor.psensor_func == NULL)
+		imgsensor.psensor_func = &sensor_func;
 	return ERROR_NONE;
 }

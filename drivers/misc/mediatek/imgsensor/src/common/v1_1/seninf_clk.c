@@ -15,6 +15,7 @@ int seninf_dfs_init(struct seninf_dfs_ctx *ctx, struct device *dev)
 	int ret, i;
 	struct dev_pm_opp *opp;
 	unsigned long freq;
+	unsigned int freq_hz;
 
 	ctx->dev = dev;
 
@@ -42,8 +43,9 @@ int seninf_dfs_init(struct seninf_dfs_ctx *ctx, struct device *dev)
 	i = 0;
 	freq = 0;
 	while (!IS_ERR(opp = dev_pm_opp_find_freq_ceil(dev, &freq))) {
-		ctx->freqs[ctx->cnt-1-i] = freq;
-		do_div(ctx->freqs[ctx->cnt-1-i], 1000000); /*Hz->MHz*/
+		freq_hz = freq;
+		freq_hz /= 1000000; /*Hz->MHz*/
+		ctx->freqs[ctx->cnt-1-i] = freq_hz;
 		ctx->volts[ctx->cnt-1-i] = dev_pm_opp_get_voltage(opp);
 		freq++;
 		i++;
@@ -78,6 +80,11 @@ int seninf_dfs_ctrl(struct seninf_dfs_ctx *ctx,
 		freq = *(unsigned int *)pbuff;
 		freq = freq * 1000000; /*MHz->Hz*/
 		opp = dev_pm_opp_find_freq_ceil(ctx->dev, &freq);
+		if (IS_ERR(opp)) {
+			pr_info("Failed to find OPP for frequency %lu: %ld\n",
+				freq, PTR_ERR(opp));
+			return -EFAULT;
+		}
 		volt = dev_pm_opp_get_voltage(opp);
 		dev_pm_opp_put(opp);
 		pr_debug("%s: freq=%ld Hz, volt=%ld\n", __func__, freq, volt);
@@ -287,14 +294,18 @@ int seninf_clk_set(struct SENINF_CLK *pclk,
 
 	seninf_clk_check(pclk);
 
-	for (i = 0; pmclk->freq != gseninf_clk_freq[i]; i++)
+	for (i = 0; ((i < SENINF_CLK_IDX_FREQ_IDX_NUM) &&
+			(pmclk->freq != gseninf_clk_freq[i])); i++)
 		;
+
+	if (i >= SENINF_CLK_IDX_FREQ_IDX_NUM)
+		return -EFAULT;
 
 	idx_tg = pmclk->TG + SENINF_CLK_IDX_TG_MIN_NUM;
 	idx_freq = i + SENINF_CLK_IDX_FREQ_MIN_NUM;
 
 	if (pmclk->on) {
-		if (!IS_MT6853(pclk->g_platform_id)) {
+		if (IS_MT6893(pclk->g_platform_id) || IS_MT6885(pclk->g_platform_id)) {
 			/* Workaround for timestamp: TG1 always ON */
 			if (pclk->mclk_sel[SENINF_CLK_IDX_TG_TOP_MUX_CAMTG]
 				!= NULL) {
@@ -344,7 +355,7 @@ int seninf_clk_set(struct SENINF_CLK *pclk,
 			}
 		}
 
-		if (!IS_MT6853(pclk->g_platform_id)) {
+		if (IS_MT6893(pclk->g_platform_id) || IS_MT6885(pclk->g_platform_id)) {
 			/* Workaround for timestamp: TG1 always ON */
 			if (pclk->mclk_sel[SENINF_CLK_IDX_TG_TOP_MUX_CAMTG] != NULL) {
 				if (atomic_read(

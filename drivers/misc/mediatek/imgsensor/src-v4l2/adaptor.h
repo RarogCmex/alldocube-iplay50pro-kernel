@@ -48,6 +48,7 @@ struct sensor_mode {
 	u64 linetime_in_ns_readout;
 	u64 fine_intg_line;
 	struct mtk_csi_param csi_param;
+	u8 esd_reset_by_user;
 };
 
 struct adaptor_hw_ops {
@@ -112,6 +113,7 @@ struct adaptor_ctx {
 	MSDK_SENSOR_CONFIG_STRUCT sensor_cfg;
 	int fmt_code;
 	int idx; /* requireed by frame-sync modules */
+	int forbid_idx; /* idx with which is forbidden to open in sametime */
 	struct mtk_hdr_ae ae_memento;
 
 	u32 seamless_scenarios[SENSOR_SCENARIO_ID_MAX];
@@ -128,6 +130,7 @@ struct adaptor_ctx {
 	unsigned int is_streaming:1;
 	unsigned int is_sensor_inited:1;
 	unsigned int is_sensor_scenario_inited:1;
+	unsigned int is_sensor_reset_stream_off:1;
 
 	int open_refcnt;
 	int power_refcnt;
@@ -137,10 +140,6 @@ struct adaptor_ctx {
 	unsigned int *sensor_debug_flag;
 	u32 shutter_for_timeout;
 	struct wakeup_source *sensor_ws;
-#ifdef __XIAOMI_CAMERA__
-	/* if is_reset is 1, do not power on/off for AFVDD pw_seq */
-	unsigned int is_reset:1;
-#endif
 };
 
 #endif

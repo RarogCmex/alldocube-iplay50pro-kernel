@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2019 MediaTek Inc.
-// Copyright (C) 2022 XiaoMi, Inc.
+
 /*****************************************************************************
  *
  * Filename:
@@ -2100,7 +2100,7 @@ static kal_uint32 get_sensor_temperature(struct subdrv_ctx *ctx)
 
 	temperature = read_cmos_sensor_8(ctx, 0x013a);
 
-	if (temperature >= 0x0 && temperature <= 0x4F)
+	if (temperature <= 0x4F)
 		temperature_convert = temperature;
 	else if (temperature >= 0x50 && temperature <= 0x7F)
 		temperature_convert = 80;
@@ -2261,7 +2261,7 @@ static int feature_control(
 	     /* night_mode((BOOL) *feature_data); */
 		break;
 	case SENSOR_FEATURE_SET_GAIN:
-		set_gain(ctx, (UINT32) *feature_data);
+		set_gain(ctx, (UINT32) * feature_data);
 		break;
 	case SENSOR_FEATURE_SET_FLASHLIGHT:
 		break;

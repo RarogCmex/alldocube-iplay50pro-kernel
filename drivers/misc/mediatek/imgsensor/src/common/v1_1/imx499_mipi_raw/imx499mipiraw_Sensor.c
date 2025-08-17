@@ -808,8 +808,6 @@ static void set_dummy(void)
 
 	write_cmos_sensor(0x0340, imgsensor.frame_length >> 8);
 	write_cmos_sensor(0x0341, imgsensor.frame_length & 0xFF);
-	write_cmos_sensor(0x0342, imgsensor.line_length >> 8);
-	write_cmos_sensor(0x0343, imgsensor.line_length & 0xFF);
 
 	write_cmos_sensor(0x0104, 0x00);
 } /* set_dummy  */
@@ -1785,8 +1783,8 @@ static kal_uint32 get_imgsensor_id(UINT32 *sensor_id)
 			*sensor_id = return_lot_id_from_otp();
 			if (*sensor_id == imgsensor_info.sensor_id) {
 				read_imx499_LRC();
-				pr_debug("i2c write id: 0x%x, sensor id: 0x%x\n",
-					imgsensor.i2c_write_id, *sensor_id);
+				pr_info("[%s] i2c write id: 0x%x, sensor id: 0x%x\n",
+					__func__, imgsensor.i2c_write_id, *sensor_id);
 				return ERROR_NONE;
 			}
 			pr_debug(
@@ -2544,7 +2542,7 @@ static kal_uint32 get_sensor_temperature(void)
 
 	temperature = read_cmos_sensor(0x013a);
 
-	if (temperature >= 0x0 && temperature <= 0x4F)
+	if (temperature <= 0x4F)
 		temperature_convert = temperature;
 	else if (temperature >= 0x50 && temperature <= 0x7F)
 		temperature_convert = 80;

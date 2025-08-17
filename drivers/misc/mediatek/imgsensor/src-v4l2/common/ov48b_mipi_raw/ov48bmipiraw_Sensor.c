@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2019 MediaTek Inc.
- * Copyright (C) 2022 XiaoMi, Inc.
  */
 /*****************************************************************************
  *
@@ -1119,8 +1118,6 @@ static void custom10_setting(struct subdrv_ctx *ctx)
 			addr_data_pair_custom10,
 			sizeof(addr_data_pair_custom10));
 		_size_to_write += _length;
-		_i2c_data[_size_to_write++] = 0x5001;
-		_i2c_data[_size_to_write++] = 0x3;
 	}
 
 
@@ -1148,8 +1145,6 @@ static void custom11_setting(struct subdrv_ctx *ctx)
 			addr_data_pair_custom11,
 			sizeof(addr_data_pair_custom11));
 		_size_to_write += _length;
-		_i2c_data[_size_to_write++] = 0x5001;
-		_i2c_data[_size_to_write++] = 0x3;
 	}
 
 
@@ -1177,8 +1172,6 @@ static void custom12_setting(struct subdrv_ctx *ctx)
 			addr_data_pair_custom12,
 			sizeof(addr_data_pair_custom12));
 		_size_to_write += _length;
-		_i2c_data[_size_to_write++] = 0x5001;
-		_i2c_data[_size_to_write++] = 0x3;
 	}
 
 
@@ -1186,7 +1179,7 @@ static void custom12_setting(struct subdrv_ctx *ctx)
 /* ITD: Modify Dualcam By Jesse 190924 End */
 static kal_uint16 read_cmos_eeprom_8(struct subdrv_ctx *ctx, kal_uint16 addr)
 {
-	u8 data;
+	u8 data = 0;
 
 	adaptor_i2c_rd_u8(ctx->i2c_client, 0xA0 >> 1, addr, &data);
 
@@ -1615,7 +1608,8 @@ static int get_resolution(struct subdrv_ctx *ctx,
 	int i = 0;
 
 	for (i = SENSOR_SCENARIO_ID_MIN; i < SENSOR_SCENARIO_ID_MAX; i++) {
-		if (i < imgsensor_info.sensor_mode_num) {
+		if (i < imgsensor_info.sensor_mode_num &&
+			i < ARRAY_SIZE(imgsensor_winsize_info)) {
 			sensor_resolution->SensorWidth[i] = imgsensor_winsize_info[i].w2_tg_size;
 			sensor_resolution->SensorHeight[i] = imgsensor_winsize_info[i].h2_tg_size;
 		} else {
@@ -2125,7 +2119,8 @@ static kal_uint32 get_default_framerate_by_scenario(struct subdrv_ctx *ctx,
 
 static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 modes)
 {
-	DEBUG_LOG(ctx, "Test_Pattern modes: %d\n", modes);
+	if (modes != ctx->test_pattern)
+		pr_debug("Test_Pattern modes: %d -> %d\n", ctx->test_pattern, modes);
 	memset(_i2c_data, 0x0, sizeof(_i2c_data));
 	_size_to_write = 0;
 	if (modes == 2) {
@@ -2136,8 +2131,8 @@ static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 modes
 		_i2c_data[_size_to_write++] = 0x5002;
 		_i2c_data[_size_to_write++] = 0x92;//10010010
 		/* need check with vendor */
-		//_i2c_data[_size_to_write++] = 0x5081;
-		//_i2c_data[_size_to_write++] = 0x01;
+		_i2c_data[_size_to_write++] = 0x5081;
+		_i2c_data[_size_to_write++] = 0x01;
 	} else if (modes == 5) { //black
 		//@@ Solid color BLACK - on
 		//6c 3019 f0; d2
@@ -2156,8 +2151,8 @@ static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 modes
 		_i2c_data[_size_to_write++] = 0x5002;
 		_i2c_data[_size_to_write++] = 0x9E;//10011110
 		/* need check with vendor */
-		//_i2c_data[_size_to_write++] = 0x5081;
-		//_i2c_data[_size_to_write++] = 0x0;
+		_i2c_data[_size_to_write++] = 0x5081;
+		_i2c_data[_size_to_write++] = 0x0;
 	} else if ((modes != 5) && (ctx->test_pattern == 5)) {
 		//@@ Solid color BLACK - off
 		//6c 3019 d2
@@ -2172,7 +2167,6 @@ static kal_uint32 set_test_pattern_mode(struct subdrv_ctx *ctx, kal_uint32 modes
 			_i2c_data,
 			_size_to_write);
 	}
-	DEBUG_LOG(ctx, "Test_Pattern modes: %d -> %d\n", ctx->test_pattern, modes);
 	ctx->test_pattern = modes;
 	return ERROR_NONE;
 }
@@ -2608,7 +2602,7 @@ static int feature_control(struct subdrv_ctx *ctx, MSDK_SENSOR_FEATURE_ENUM feat
 	    night_mode(ctx, (BOOL) * feature_data);
 	break;
 	case SENSOR_FEATURE_SET_GAIN:
-	    set_gain(ctx, (UINT32) *feature_data);
+	    set_gain(ctx, (UINT32) * feature_data);
 	break;
 	case SENSOR_FEATURE_SET_FLASHLIGHT:
 	break;

@@ -17,7 +17,7 @@
 #define CCU_CAM_TG_MAX 4
 
 /* Sync To: "ccu_platform.h" */
-#define CAMSV_MAX       (10)
+#define CAMSV_MAX       (16)
 #define CAMSV_TG_MIN    (5)
 #define CAMSV_TG_MAX    (CAMSV_TG_MIN+CAMSV_MAX)
 #define FM_TG_CNT       (CAMSV_TG_MAX)
@@ -43,7 +43,8 @@ struct vsync_rec {
 };
 /******************************************************************************/
 #define MSG_TO_CCU_RESET_VSYNC_TIMESTAMP 0
-#define MSG_TO_CCU_GET_VSYNC_TIMESTAMP 1
+#define MSG_TO_CCU_CLEAR_VSYNC_TIMESTAMP 1
+#define MSG_TO_CCU_GET_VSYNC_TIMESTAMP 2
 /******************************************************************************/
 
 
@@ -56,7 +57,7 @@ struct vsync_rec {
 #ifdef USING_CCU
 void frm_power_on_ccu(unsigned int flag);
 
-void frm_reset_ccu_vsync_timestamp(unsigned int idx);
+void frm_reset_ccu_vsync_timestamp(unsigned int idx, unsigned int en);
 
 unsigned int frm_get_ccu_pwn_cnt(void);
 #endif
@@ -69,6 +70,7 @@ void frm_init_frame_info_st_data(
 void frm_reset_frame_info(unsigned int idx);
 
 unsigned int frm_convert_cammux_tg_to_ccu_tg(unsigned int tg);
+unsigned int frm_convert_cammux_id_to_ccu_tg_id(unsigned int cammux_id);
 
 void frm_update_tg(unsigned int idx, unsigned int tg);
 
@@ -88,6 +90,12 @@ void frm_set_frame_measurement(
 	unsigned int idx, unsigned int passed_vsyncs,
 	unsigned int curr_fl_us, unsigned int curr_fl_lc,
 	unsigned int next_fl_us, unsigned int next_fl_lc);
+
+
+void frm_get_curr_frame_mesurement_and_ts_data(
+	const unsigned int idx, unsigned int *p_fmeas_idx,
+	unsigned int *p_pr_fl_us, unsigned int *p_pr_fl_lc,
+	unsigned int *p_act_fl_us, unsigned int *p_ts_arr);
 
 
 int frm_timestamp_checker(unsigned int m_tg, unsigned int s_tg);

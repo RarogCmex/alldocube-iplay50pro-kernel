@@ -622,6 +622,8 @@ static int g_test_pattern_checksum(struct adaptor_ctx *ctx, void *arg)
 	union feature_para para;
 	u32 len;
 
+	para.u32[0] = 0;
+
 	subdrv_call(ctx, feature_control,
 		SENSOR_FEATURE_GET_TEST_PATTERN_CHECKSUM_VALUE,
 		para.u8, &len);
@@ -936,18 +938,18 @@ static int g_preload_eeprom_data(struct adaptor_ctx *ctx, void *arg)
 
 static int g_ae_frame_mode_for_le(struct adaptor_ctx *ctx, void *arg)
 {
-	subdrv_call(ctx, feature_control,
-		SENSOR_FEATURE_GET_AE_FRAME_MODE_FOR_LE,
-		0, arg);
+	//subdrv_call(ctx, feature_control,
+	//		SENSOR_FEATURE_GET_AE_FRAME_MODE_FOR_LE,
+	//		0, arg);
 
 	return 0;
 }
 
 static int g_ae_effective_frame_for_le(struct adaptor_ctx *ctx, void *arg)
 {
-	subdrv_call(ctx, feature_control,
-		SENSOR_FEATURE_GET_AE_EFFECTIVE_FRAME_FOR_LE,
-		0, arg);
+	//subdrv_call(ctx, feature_control,
+	//	SENSOR_FEATURE_GET_AE_EFFECTIVE_FRAME_FOR_LE,
+	//	0, arg);
 
 	return 0;
 }
@@ -1013,8 +1015,13 @@ static int g_scenario_combo_info(struct adaptor_ctx *ctx, void *arg)
 static int g_sensor_info(struct adaptor_ctx *ctx, void *arg)
 {
 	struct mtk_sensor_info *info = arg;
+	int ret = 0;
 
-	snprintf(info->name, sizeof(info->name), "%s", ctx->subdrv->name);
+	ret = snprintf(info->name, sizeof(info->name), "%s", ctx->subdrv->name);
+
+	if (ret < 0)
+		dev_info(ctx->dev, "g_sensor_info fail, ret:%d\n", ret);
+
 	info->id = ctx->subdrv->id;
 
 	/* read property */
@@ -1138,9 +1145,9 @@ static int g_seamless_switch_scenario(struct adaptor_ctx *ctx, void *arg)
 				target_scenario_ids[count]);
 		++count;
 	}
-
-	copy_to_user(target->target_scenario_ids,
-				 target_scenario_ids, sizeof(target_scenario_ids));
+	if (copy_to_user(target->target_scenario_ids,
+				 target_scenario_ids, sizeof(target_scenario_ids)))
+		return -EFAULT;
 
 	target->count = count;
 
@@ -1306,7 +1313,7 @@ static int s_control(struct adaptor_ctx *ctx, void *arg)
 {
 	struct mtk_sensor_control *info = arg;
 	struct workbuf workbuf1, workbuf2;
-	int ret;
+	int ret, workbuf_put_ret;
 
 	ret = workbuf_get(&workbuf1, info->p_window,
 		sizeof(*info->p_window), F_READ);
@@ -1315,16 +1322,15 @@ static int s_control(struct adaptor_ctx *ctx, void *arg)
 
 	ret = workbuf_get(&workbuf2, info->p_config,
 		sizeof(*info->p_config), F_READ);
-	if (ret)
+	if (ret) {
+		workbuf_put_ret = workbuf_put(&workbuf1);
 		return ret;
+	}
 
 	subdrv_call(ctx, control,
 		info->scenario_id, workbuf1.kbuf, workbuf2.kbuf);
-
-	ret = workbuf_put(&workbuf1);
-	ret = workbuf_put(&workbuf2);
-	if (ret)
-		return ret;
+	workbuf_put_ret = workbuf_put(&workbuf1);
+	workbuf_put_ret = workbuf_put(&workbuf2);
 
 	return 0;
 }
@@ -1337,23 +1343,6 @@ static int s_tg(struct adaptor_ctx *ctx, void *arg)
 
 	return 0;
 }
-
-#ifdef __XIAOMI_CAMERA__
-static int s_enable_seamless_switch(struct adaptor_ctx *ctx, void *arg)
-{
-	u32 *info = arg;
-	union feature_para para;
-	u32 len;
-
-	para.u32[0] = *info;
-
-	subdrv_call(ctx, feature_control,
-		XIAOMI_FEATURE_ENABLE_SEAMLESS_SWITCH,
-		para.u8, &len);
-
-	return 0;
-}
-#endif
 
 struct ioctl_entry {
 	unsigned int cmd;
@@ -1411,9 +1400,6 @@ static const struct ioctl_entry ioctl_list[] = {
 	{VIDIOC_MTK_S_LSC_TBL, s_lsc_tbl},
 	{VIDIOC_MTK_S_CONTROL, s_control},
 	{VIDIOC_MTK_S_TG, s_tg},
-#ifdef __XIAOMI_CAMERA__
-	{VIDIOC_XIAOMI_S_ENABLE_SEAMLESS_SWITCH, s_enable_seamless_switch},
-#endif
 };
 
 long adaptor_ioctl(struct v4l2_subdev *sd, unsigned int cmd, void *arg)
