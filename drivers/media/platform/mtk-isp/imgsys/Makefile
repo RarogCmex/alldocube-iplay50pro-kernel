@@ -6,6 +6,7 @@ export MTK_IMGSYS_VER := $(subst ",,$(CONFIG_MTK_IMGSYS_VER))
 ccflags-y += -I$(srctree)/drivers/media/platform/mtk-isp/mtk-hcp
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/cmdq/mailbox/
 ccflags-y += -I$(srctree)/drivers/media/platform/mtk-isp/imgsys/platforms/
+ccflags-y += -I$(srctree)/drivers/media/platform/mtk-isp/imgsys/
 ccflags-y += -I$(srctree)/drivers/media/platform/mtk-isp/imgsys/platforms/isp71
 ccflags-y += -I$(srctree)/drivers/media/platform/mtk-isp/mtk-ipesys-me/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/mtk-interconnect/

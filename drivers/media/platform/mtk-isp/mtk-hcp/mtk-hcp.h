@@ -14,7 +14,7 @@
 #include <linux/dma-direction.h>
 #include <linux/scatterlist.h>
 #include <linux/dma-buf.h>
-#include "mtk-img-ipi.h"
+#include <mtk-img-ipi.h>
 
 //#include "scp_ipi.h"
 
