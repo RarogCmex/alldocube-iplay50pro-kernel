@@ -1362,4 +1362,21 @@ config TOUCHSCREEN_MT6895_ALPHA_SUPPORT
 	  To compile this dirver for used touch IC.
 	  Set Y or M to select this feature for specific platform-mt6895,
 	  and set N to disable.
+
+config TOUCHSCREEN_HIMAX_CHIPSET
+	bool "Himax touchpanel CHIPSET"
+	depends on I2C
+	help
+	  Say Y here if you have a Himax CHIPSET touchscreen.
+	  HIMAX controllers are multi touch controllers which can
+	  report 10 touches at a time.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called hxchipset.
+
+source "drivers/input/touchscreen/hxchipset/Kconfig"
+source "drivers/input/touchscreen/nt36523/Kconfig"
+
 endif
