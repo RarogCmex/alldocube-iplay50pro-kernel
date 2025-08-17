@@ -5,7 +5,7 @@
 
 #include <linux/clk.h>
 
-#include "seninf_clk.h"
+#include <seninf_clk.h>
 #include "platform_common.h"
 
 

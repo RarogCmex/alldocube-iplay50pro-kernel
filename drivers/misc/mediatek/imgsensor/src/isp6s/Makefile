@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2020 MediaTek Inc.
 
-MTK_PLATFORM := isp6s
+MTK_PLATFORM = isp6s
 
 MTK_SENSOR_PROJECT :=
 MTK_DERIVED_PLATFORM :=
