@@ -8,7 +8,7 @@
 
 #include <linux/types.h>
 #include <linux/time.h>
-#include <mtk_header_desc.h>
+#include "mtk_header_desc.h"
 
 #ifndef __KERNEL__
 #define BIT(nr)	(1UL << (nr))

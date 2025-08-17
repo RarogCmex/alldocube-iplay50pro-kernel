@@ -47,7 +47,7 @@
 #define ISP2400_DMA_MAX_BURST_LENGTH	128
 #define ISP2401_DMA_MAX_BURST_LENGTH	2
 
-#include <hive_isp_css_defs.h>
+#include "hive_isp_css_defs.h"
 #include <type_support.h>
 
 /* This interface is deprecated */

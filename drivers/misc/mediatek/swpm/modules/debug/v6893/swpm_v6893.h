@@ -6,9 +6,9 @@
 #ifndef __SWPM_V6893_H__
 #define __SWPM_V6893_H__
 
-#include <swpm_gpu_v6893.h>
-#include <swpm_isp_v6893.h>
-#include <swpm_me_v6893.h>
+#include "swpm_gpu_v6893.h"
+#include "swpm_isp_v6893.h"
+#include "swpm_me_v6893.h"
 
 #define SWPM_TEST (0)
 

@@ -21,9 +21,9 @@
  */
 
 #include <type_support.h>
-#include <ia_css_env.h>
-#include <ia_css_firmware.h>
-#include <ia_css_irq.h>
+#include "ia_css_env.h"
+#include "ia_css_firmware.h"
+#include "ia_css_irq.h"
 
 /* @brief Initialize the CSS API.
  * @param[in]	env		Environment, provides functions to access the

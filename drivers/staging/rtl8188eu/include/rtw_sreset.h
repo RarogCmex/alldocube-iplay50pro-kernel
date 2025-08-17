@@ -7,14 +7,14 @@
 #ifndef _RTW_SRESET_C_
 #define _RTW_SRESET_C_
 
-#include <osdep_service.h>
-#include <drv_types.h>
+#include "osdep_service.h"
+#include "drv_types.h"
 
 struct sreset_priv {
 	u8 wifi_error_status;
 };
 
-#include <rtl8188e_hal.h>
+#include "rtl8188e_hal.h"
 
 #define	WIFI_STATUS_SUCCESS		0
 #define	USB_VEN_REQ_CMD_FAIL		BIT(0)

@@ -2,8 +2,8 @@
 #ifndef _ARCH_POWERPC_BOOT_LIBFDT_ENV_H
 #define _ARCH_POWERPC_BOOT_LIBFDT_ENV_H
 
-#include <types.h>
-#include <string.h>
+#include "types.h"
+#include "string.h"
 
 #define INT_MAX			((int)(~0U>>1))
 #define UINT32_MAX		((u32)~0U)

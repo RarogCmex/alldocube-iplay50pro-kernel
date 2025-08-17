@@ -16,7 +16,7 @@
 #ifndef _hive_isp_css_streaming_to_mipi_types_hrt_h_
 #define _hive_isp_css_streaming_to_mipi_types_hrt_h_
 
-#include <streaming_to_mipi_defs.h>
+#include "streaming_to_mipi_defs.h"
 
 #define _HIVE_ISP_CH_ID_MASK    ((1U << HIVE_ISP_CH_ID_BITS) - 1)
 #define _HIVE_ISP_FMT_TYPE_MASK ((1U << HIVE_ISP_FMT_TYPE_BITS) - 1)

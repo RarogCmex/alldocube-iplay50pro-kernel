@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-#include <config.h>
+#include "config.h"
 
 #include "misc.h"
 #include "bug_on.h"

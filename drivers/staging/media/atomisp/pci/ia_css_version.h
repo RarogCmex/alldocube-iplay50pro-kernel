@@ -20,7 +20,7 @@
  * This file contains functions to retrieve CSS-API version information
  */
 
-#include <ia_css_err.h>
+#include "ia_css_err.h"
 
 /* a common size for the version arrays */
 #define MAX_VERSION_SIZE	500

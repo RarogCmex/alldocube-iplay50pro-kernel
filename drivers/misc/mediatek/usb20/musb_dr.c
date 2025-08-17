@@ -9,12 +9,12 @@
 
 #include <linux/of_platform.h>
 
-#include <usb20.h>
-#include <musb_dr.h>
-#include <musb_host.h>
-#include <musb_gadget.h>
+#include "usb20.h"
+#include "musb_dr.h"
+#include "musb_host.h"
+#include "musb_gadget.h"
 #if IS_ENABLED(CONFIG_DEBUG_FS)
-#include <musb_debug.h>
+#include "musb_debug.h"
 #endif
 
 #if IS_ENABLED(CONFIG_MTK_BASE_POWER)

@@ -7,7 +7,7 @@
 #ifndef __INC_HAL8723BPHYREG_H__
 #define __INC_HAL8723BPHYREG_H__
 
-#include <Hal8192CPhyReg.h>
+#include "Hal8192CPhyReg.h"
 
 /*  BB Register Definition */
 /*  */

@@ -15,7 +15,7 @@
 
 #include <asm/mipsmtregs.h>
 
-#include <irq.h>
+#include "irq.h"
 
 #define IRQ_STACK_SIZE			THREAD_SIZE
 #define IRQ_STACK_START			(IRQ_STACK_SIZE - 16)

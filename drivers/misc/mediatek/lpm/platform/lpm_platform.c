@@ -7,10 +7,10 @@
 #include <linux/of.h>
 
 #include <lpm.h>
-#include <lpm_irqremain.h>
-#include <lpm_resource_ctrl.h>
-#include <lpm_rc.h>
-#include <lpm_trace.h>
+#include "lpm_irqremain.h"
+#include "lpm_resource_ctrl.h"
+#include "lpm_rc.h"
+#include "lpm_trace.h"
 
 int lpm_platform_trace_get(int type, struct LPM_PLAT_TRACE *trace)
 {

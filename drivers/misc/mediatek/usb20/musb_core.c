@@ -28,15 +28,15 @@
 #include <linux/err.h>
 #endif
 
-#include <musb_core.h>
-#include <musbhsdma.h>
+#include "musb_core.h"
+#include "musbhsdma.h"
 #if IS_ENABLED(CONFIG_OF)
 #include <linux/of_irq.h>
 #include <linux/of_address.h>
-#include <mtk_musb.h>
+#include "mtk_musb.h"
 #endif
 
-#include <usb20.h>
+#include "usb20.h"
 
 int musb_fake_CDP;
 

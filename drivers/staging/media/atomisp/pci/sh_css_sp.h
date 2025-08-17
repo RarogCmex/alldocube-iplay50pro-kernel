@@ -16,7 +16,7 @@
 #ifndef _SH_CSS_SP_H_
 #define _SH_CSS_SP_H_
 
-#include <system_global.h>
+#include "system_global.h"
 #include <type_support.h>
 #if !defined(ISP2401)
 #include "input_formatter.h"

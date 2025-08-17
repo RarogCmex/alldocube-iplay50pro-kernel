@@ -115,7 +115,7 @@ enum machine_type {
 
 /* Address of data segment in memory after it is loaded. */
 #ifndef __KERNEL__
-#include <unistd.h>
+#include "unistd.h"
 #endif
 #if defined(__i386__) || defined(__mc68000__)
 #define SEGMENT_SIZE	1024

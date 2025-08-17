@@ -20,7 +20,7 @@
  * This file contains support for setting the shading table for CSS
  */
 
-#include <ia_css_types.h>
+#include "ia_css_types.h"
 
 /* @brief Shading table
  * @param[in]	width Width of the shading table.

@@ -12,7 +12,7 @@
 #include <linux/if_pppox.h>
 
 #ifndef __KERNEL__
-#include <limits.h> /* for INT_MIN, INT_MAX */
+#include "limits.h" /* for INT_MIN, INT_MAX */
 #endif
 
 /* Bridge Hooks */

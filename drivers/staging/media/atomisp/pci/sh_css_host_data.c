@@ -14,8 +14,8 @@
  */
 
 #include <linux/slab.h>
-#include <ia_css_host_data.h>
-#include <sh_css_internal.h>
+#include "ia_css_host_data.h"
+#include "sh_css_internal.h"
 
 struct ia_css_host_data *ia_css_host_data_allocate(size_t size)
 {

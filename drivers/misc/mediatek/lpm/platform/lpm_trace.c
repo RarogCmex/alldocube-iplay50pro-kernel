@@ -11,7 +11,7 @@
 
 #include <lpm_module.h>
 #include <lpm_internal.h>
-#include <lpm_trace.h>
+#include "lpm_trace.h"
 
 
 #define LPM_TRACE_SYSRAM_MEMCPY_DEST(_offset, _buf, _sz) ({\

@@ -23,8 +23,8 @@
 
 #include <linux/usb/composite.h>
 
-#include <musb_core.h>
-#include <mtk_musb.h>
+#include "musb_core.h"
+#include "mtk_musb.h"
 
 /* GADGET only support all-ep QMU, otherwise downgrade to non-QMU */
 #ifdef MUSB_QMU_LIMIT_SUPPORT

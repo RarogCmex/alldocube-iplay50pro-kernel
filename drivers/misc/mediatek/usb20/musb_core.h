@@ -17,8 +17,8 @@
 #include <linux/usb.h>
 #include <linux/usb/otg.h>
 #include <linux/usb/role.h>
-#include <musb.h>
-#include <musb_dr.h>
+#include "musb.h"
+#include "musb_dr.h"
 #include <linux/pm_wakeup.h>
 #include <linux/version.h>
 #include <linux/clk.h>

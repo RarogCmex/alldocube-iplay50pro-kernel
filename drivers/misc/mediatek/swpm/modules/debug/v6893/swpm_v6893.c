@@ -33,8 +33,8 @@
 #include <mtk_swpm_sysfs.h>
 #include <swpm_dbg_common_v1.h>
 #include <swpm_module.h>
-#include <swpm_v6893.h>
-#include <swpm_v6893_ext.h>
+#include "swpm_v6893.h"
+#include "swpm_v6893_ext.h"
 
 /****************************************************************************
  *  Global Variables

@@ -10,8 +10,8 @@
 #include <sys/types.h>
 #include "srccode.h"
 #include "symbol_conf.h"
-#include <strlist.h>
-#include <intlist.h>
+#include "strlist.h"
+#include "intlist.h"
 #include "rwsem.h"
 #include "event.h"
 #include "callchain.h"

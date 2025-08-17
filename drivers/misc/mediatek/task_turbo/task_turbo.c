@@ -28,10 +28,10 @@
 #include <trace/hooks/cgroup.h>
 #include <trace/hooks/sys.h>
 
-#include <task_turbo.h>
+#include "task_turbo.h"
 
 #define CREATE_TRACE_POINTS
-#include <trace_task_turbo.h>
+#include "trace_task_turbo.h"
 
 // MIUI ADD:
 #include <linux/seq_file.h>

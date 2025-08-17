@@ -3,7 +3,7 @@
  * Copyright (c) 2019 MediaTek Inc.
  */
 
-#include <emi_mpu.h>
+#include "emi_mpu.h"
 #include <linux/arm-smccc.h>
 #include <linux/device.h>
 #include <linux/interrupt.h>

@@ -15,7 +15,7 @@
 #include <linux/slab.h>
 #include <trace/hooks/sched.h>
 
-#include <perf_tracker_internal.h>
+#include "perf_tracker_internal.h"
 
 #define TAG	"mtk_perf_common"
 

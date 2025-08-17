@@ -16,7 +16,7 @@
 #ifndef _STREAM2MMMIO_DEFS_H
 #define _STREAM2MMMIO_DEFS_H
 
-#include <mipi_backend_defs.h>
+#include "mipi_backend_defs.h"
 
 #define _STREAM2MMIO_REG_ALIGN                  4
 

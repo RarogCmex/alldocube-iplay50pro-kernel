@@ -21,7 +21,7 @@
  */
 
 #include <type_support.h> /* bool */
-#include <ia_css_types.h> /* ia_css_vamem_type */
+#include "ia_css_types.h" /* ia_css_vamem_type */
 
 struct ia_css_properties {
 	int  gdc_coord_one;

@@ -7,7 +7,7 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
-#include <symbol.h> // filename__read_build_id
+#include "symbol.h" // filename__read_build_id
 
 static int __dso_id__cmp(struct dso_id *a, struct dso_id *b)
 {

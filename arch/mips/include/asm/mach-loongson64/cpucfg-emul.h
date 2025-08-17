@@ -6,7 +6,7 @@
 
 #ifdef CONFIG_CPU_LOONGSON3_CPUCFG_EMULATION
 
-#include <loongson_regs.h>
+#include "loongson_regs.h"
 
 #define LOONGSON_FPREV_MASK 0x7
 

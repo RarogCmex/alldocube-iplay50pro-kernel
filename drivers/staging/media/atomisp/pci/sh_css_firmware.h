@@ -16,10 +16,10 @@
 #ifndef _SH_CSS_FIRMWARE_H_
 #define _SH_CSS_FIRMWARE_H_
 
-#include <system_local.h>
+#include "system_local.h"
 
-#include <ia_css_err.h>
-#include <ia_css_acc_types.h>
+#include "ia_css_err.h"
+#include "ia_css_acc_types.h"
 
 /* This is for the firmware loaded from user space */
 struct  sh_css_fw_bi_file_h {

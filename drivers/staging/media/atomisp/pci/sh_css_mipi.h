@@ -16,9 +16,9 @@
 #ifndef __SH_CSS_MIPI_H
 #define __SH_CSS_MIPI_H
 
-#include <ia_css_err.h>		  /* ia_css_err */
-#include <ia_css_types.h>	  /* ia_css_pipe */
-#include <ia_css_stream_public.h> /* ia_css_stream_config */
+#include "ia_css_err.h"		  /* ia_css_err */
+#include "ia_css_types.h"	  /* ia_css_pipe */
+#include "ia_css_stream_public.h" /* ia_css_stream_config */
 
 void
 mipi_init(void);

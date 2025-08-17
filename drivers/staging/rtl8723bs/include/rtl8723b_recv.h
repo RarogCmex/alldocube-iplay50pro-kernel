@@ -7,7 +7,7 @@
 #ifndef __RTL8723B_RECV_H__
 #define __RTL8723B_RECV_H__
 
-#include <rtl8192c_recv.h>
+#include "rtl8192c_recv.h"
 
 typedef struct rxreport_8723b {
 	/* DWORD 0 */

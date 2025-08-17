@@ -15,7 +15,7 @@
 #include "slbc_ipi.h"
 #include "slbc_ops.h"
 #include "slbc.h"
-#include <mtk_slbc_sram.h>
+#include "mtk_slbc_sram.h"
 
 static int slbc_sspm_ready;
 static int slbc_scmi_enable;

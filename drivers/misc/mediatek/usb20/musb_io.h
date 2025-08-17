@@ -8,8 +8,8 @@
 
 #include <linux/io.h>
 #include <linux/spinlock.h>
-#include <usb20.h>
-#include <musb_debug.h>
+#include "usb20.h"
+#include "musb_debug.h"
 
 extern bool mtk_usb_power;
 #if IS_ENABLED(CONFIG_MTK_MUSB_PORT0_LOWPOWER_MODE)

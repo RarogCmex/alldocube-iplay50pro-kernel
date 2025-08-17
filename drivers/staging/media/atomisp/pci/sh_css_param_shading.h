@@ -16,7 +16,7 @@
 #ifndef __SH_CSS_PARAMS_SHADING_H
 #define __SH_CSS_PARAMS_SHADING_H
 
-#include <ia_css_types.h>
+#include "ia_css_types.h"
 #include <ia_css_binary.h>
 
 void

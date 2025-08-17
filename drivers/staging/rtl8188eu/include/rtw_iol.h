@@ -7,7 +7,7 @@
 #ifndef __RTW_IOL_H_
 #define __RTW_IOL_H_
 
-#include <drv_types.h>
+#include "drv_types.h"
 
 bool rtw_iol_applied(struct adapter *adapter);
 

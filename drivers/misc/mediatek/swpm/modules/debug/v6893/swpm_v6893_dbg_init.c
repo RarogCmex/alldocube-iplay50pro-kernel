@@ -22,8 +22,8 @@
 #include <swpm_dbg_common_v1.h>
 #include <swpm_module.h>
 #include <swpm_module_ext.h>
-#include <swpm_v6893.h>
-#include <swpm_v6893_ext.h>
+#include "swpm_v6893.h"
+#include "swpm_v6893_ext.h"
 
 #undef swpm_dbg_log
 #define swpm_dbg_log(fmt, args...) \

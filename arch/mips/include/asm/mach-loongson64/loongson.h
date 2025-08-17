@@ -10,7 +10,7 @@
 #include <linux/io.h>
 #include <linux/init.h>
 #include <linux/irq.h>
-#include <boot_param.h>
+#include "boot_param.h"
 
 
 /* machine-specific reboot/halt operation */

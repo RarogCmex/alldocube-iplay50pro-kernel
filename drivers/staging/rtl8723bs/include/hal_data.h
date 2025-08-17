@@ -8,9 +8,9 @@
 #define __HAL_DATA_H__
 
 #include "odm_precomp.h"
-#include <hal_btcoex.h>
+#include "hal_btcoex.h"
 
-#include <hal_sdio.h>
+#include "hal_sdio.h"
 
 /*  */
 /*  <Roger_Notes> For RTL8723 WiFi/BT/GPS multi-function configuration. 2010.10.06. */

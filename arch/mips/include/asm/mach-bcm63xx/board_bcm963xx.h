@@ -5,8 +5,8 @@
 #include <linux/types.h>
 #include <linux/gpio.h>
 #include <linux/leds.h>
-#include <bcm63xx_dev_enet.h>
-#include <bcm63xx_dev_usb_usbd.h>
+#include "bcm63xx_dev_enet.h"
+#include "bcm63xx_dev_usb_usbd.h"
 
 /*
  * flash mapping

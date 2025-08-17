@@ -10,7 +10,7 @@
 
 #include "mnoc_drv.h"
 
-#include <mnoc_util.h>
+#include "mnoc_util.h"
 #include <mnoc_plat_api.h>
 #include "mnoc_api.h"
 

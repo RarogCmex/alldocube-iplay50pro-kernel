@@ -10,7 +10,7 @@
 #include <linux/proc_fs.h>
 
 #include <swpm_dbg_common_v1.h>
-#include <swpm_dbg_fs_common.h>
+#include "swpm_dbg_fs_common.h"
 #include <swpm_module.h>
 
 #if IS_ENABLED(CONFIG_MTK_SWPM_PERF_ARMV8_PMU)

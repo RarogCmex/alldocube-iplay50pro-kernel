@@ -17,11 +17,11 @@
 #define _SH_CSS_LEGACY_H_
 
 #include <type_support.h>
-#include <ia_css_err.h>
-#include <ia_css_types.h>
-#include <ia_css_frame_public.h>
-#include <ia_css_pipe_public.h>
-#include <ia_css_stream_public.h>
+#include "ia_css_err.h"
+#include "ia_css_types.h"
+#include "ia_css_frame_public.h"
+#include "ia_css_pipe_public.h"
+#include "ia_css_stream_public.h"
 
 /* The pipe id type, distinguishes the kind of pipes that
  *  can be run in parallel.

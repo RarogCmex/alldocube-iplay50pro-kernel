@@ -8,7 +8,7 @@
 #ifndef __ASM_TOPOLOGY_H
 #define __ASM_TOPOLOGY_H
 
-#include <topology.h>
+#include "topology.h"
 #include <linux/smp.h>
 
 #ifdef CONFIG_SMP

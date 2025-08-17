@@ -11,7 +11,7 @@
 #include <linux/sched.h>
 #include <linux/types.h>
 #include <linux/tracepoint.h>
-#include <task_turbo.h>
+#include "task_turbo.h"
 
 TRACE_EVENT(turbo_set,
 	TP_PROTO(struct task_struct *p),

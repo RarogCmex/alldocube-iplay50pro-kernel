@@ -19,8 +19,8 @@
 #include <mtk_swpm_sysfs.h>
 #include <swpm_module.h>
 #include <swpm_module_ext.h>
-#include <swpm_v6893.h>
-#include <swpm_v6893_ext.h>
+#include "swpm_v6893.h"
+#include "swpm_v6893_ext.h"
 
 #define SWPM_INTERNAL_TEST (0)
 #define DEFAULT_UPDATE_MS (10000)

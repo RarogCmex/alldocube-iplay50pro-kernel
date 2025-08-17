@@ -2,7 +2,7 @@
 #ifndef BCM63XX_IOREMAP_H_
 #define BCM63XX_IOREMAP_H_
 
-#include <bcm63xx_cpu.h>
+#include "bcm63xx_cpu.h"
 
 static inline int is_bcm63xx_internal_registers(phys_addr_t offset)
 {

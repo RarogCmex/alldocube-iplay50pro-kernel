@@ -82,17 +82,17 @@ static inline struct rseq_abi *rseq_get_abi(void)
 	} while (0)
 
 #if defined(__x86_64__) || defined(__i386__)
-#include <rseq-x86.h>
+#include "rseq-x86.h"
 #elif defined(__ARMEL__)
-#include <rseq-arm.h>
+#include "rseq-arm.h"
 #elif defined (__AARCH64EL__)
-#include <rseq-arm64.h>
+#include "rseq-arm64.h"
 #elif defined(__PPC__)
-#include <rseq-ppc.h>
+#include "rseq-ppc.h"
 #elif defined(__mips__)
-#include <rseq-mips.h>
+#include "rseq-mips.h"
 #elif defined(__s390__)
-#include <rseq-s390.h>
+#include "rseq-s390.h"
 #else
 #error unsupported target
 #endif

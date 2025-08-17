@@ -6,7 +6,7 @@
 #ifndef __MTK_DCM_INTERNAL_H__
 #define __MTK_DCM_INTERNAL_H__
 
-#include <mtk_dcm_common.h>
+#include "mtk_dcm_common.h"
 #include "mt6853_dcm_autogen.h"
 
 /* #define DCM_DEFAULT_ALL_OFF */

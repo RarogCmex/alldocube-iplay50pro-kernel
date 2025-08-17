@@ -14,10 +14,10 @@
 #include <lpm_dbg_fs_common.h>
 #include <lpm_dbg_logger.h>
 
-#include <mt6873_lpm_trace_event.h>
-#include <mt6873_dbg_fs.h>
-#include <mt6873_dbg_power_gs.h>
-#include <mt6873_lpm_logger.h>
+#include "mt6873_lpm_trace_event.h"
+#include "mt6873_dbg_fs.h"
+#include "mt6873_dbg_power_gs.h"
+#include "mt6873_lpm_logger.h"
 
 static int __init mt6873_dbg_early_initcall(void)
 {

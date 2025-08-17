@@ -4,7 +4,7 @@
 
 #include <sys/prctl.h>
 #include <sys/syscall.h>
-#include <string.h>
+#include "string.h"
 #include <limits.h>
 #include <linux/utsname.h>
 #include <linux/compiler.h>

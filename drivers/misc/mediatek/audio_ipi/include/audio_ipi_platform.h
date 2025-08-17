@@ -7,7 +7,7 @@
 #define __AUDIO_IPI_PLATFORM_H__
 
 #include <linux/types.h>
-#include <audio_ipi_platform_common.h>
+#include "audio_ipi_platform_common.h"
 
 /* by chip */
 uint32_t audio_get_dsp_id(const uint8_t task);

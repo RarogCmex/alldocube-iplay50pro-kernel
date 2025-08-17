@@ -31,7 +31,7 @@
 
 //add for feas perfmgr +{
 #if IS_ENABLED(CONFIG_FEAS)
-#include <perfmgr.h>
+#include "perfmgr.h"
 
 #define ENABLE_DELAYED_USECS  15000000 //15s
 void perfmgr_notify_qudeq(int pid,unsigned long long identifier);

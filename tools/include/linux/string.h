@@ -3,7 +3,7 @@
 #define _TOOLS_LINUX_STRING_H_
 
 #include <linux/types.h>	/* for size_t */
-#include <string.h>
+#include "string.h"
 
 void *memdup(const void *src, size_t len);
 

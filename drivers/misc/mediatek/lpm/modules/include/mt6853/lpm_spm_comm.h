@@ -8,7 +8,7 @@
 #define __LPM_SPM_COMM_H__
 
 #include <lpm_dbg_common_v1.h>
-#include <lpm_pcm_def.h>
+#include "lpm_pcm_def.h"
 
 /* Determine for user name handle */
 #define MT_LP_RQ_USER_NAME_LEN	(4)

@@ -20,7 +20,7 @@
  * This file contains supporting for morphing table
  */
 
-#include <ia_css_types.h>
+#include "ia_css_types.h"
 
 /* @brief Morphing table
  * @param[in]	width Width of the morphing table.

@@ -3,10 +3,10 @@
  * Copyright (C) 2018 MediaTek Inc.
  */
 
-#include <usb20.h>
-#include <musb_io.h>
-#include <mtk_musb_reg.h>
-#include <musb_core.h>
+#include "usb20.h"
+#include "musb_io.h"
+#include "mtk_musb_reg.h"
+#include "musb_core.h"
 
 #if IS_ENABLED(CONFIG_USB_MTK_OTG)
 #include <linux/module.h>
@@ -17,7 +17,7 @@
 #include <linux/gpio.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
-#include <mtk_musb.h>
+#include "mtk_musb.h"
 #include <linux/of_irq.h>
 #include <linux/of_address.h>
 #if IS_ENABLED(CONFIG_MTK_USB_TYPEC)

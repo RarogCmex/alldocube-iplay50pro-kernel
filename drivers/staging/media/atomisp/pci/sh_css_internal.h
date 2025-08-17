@@ -16,7 +16,7 @@
 #ifndef _SH_CSS_INTERNAL_H_
 #define _SH_CSS_INTERNAL_H_
 
-#include <system_global.h>
+#include "system_global.h"
 #include <math_support.h>
 #include <type_support.h>
 #include <platform_support.h>

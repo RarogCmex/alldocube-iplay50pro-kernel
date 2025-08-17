@@ -18,7 +18,7 @@
 #include <linux/uaccess.h>
 #include <linux/errno.h>
 
-#include <slbc.h>
+#include "slbc.h"
 
 int slbc_enable;
 EXPORT_SYMBOL_GPL(slbc_enable);

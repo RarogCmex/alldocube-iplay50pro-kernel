@@ -11,7 +11,7 @@
 #endif
 
 #include <linux/interrupt.h>
-#include <musb.h>
+#include "musb.h"
 
 struct mt_usb_work {
 	struct delayed_work dwork;

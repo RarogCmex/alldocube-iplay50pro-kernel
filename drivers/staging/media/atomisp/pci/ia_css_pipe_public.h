@@ -21,12 +21,12 @@
  */
 
 #include <type_support.h>
-#include <ia_css_err.h>
-#include <ia_css_types.h>
-#include <ia_css_frame_public.h>
-#include <ia_css_buffer.h>
+#include "ia_css_err.h"
+#include "ia_css_types.h"
+#include "ia_css_frame_public.h"
+#include "ia_css_buffer.h"
 /* ISP2401 */
-#include <ia_css_acc_types.h>
+#include "ia_css_acc_types.h"
 
 enum {
 	IA_CSS_PIPE_OUTPUT_STAGE_0 = 0,

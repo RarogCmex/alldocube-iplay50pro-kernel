@@ -10,7 +10,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
-#include <leds-mtk.h>
+#include "leds-mtk.h"
 #include "../drivers/gpu/drm/mediatek/mediatek_v2/mtk_panel_ext.h"
 
 extern int __attribute__ ((weak)) mtk_drm_gateic_set_backlight(unsigned int level, char func);

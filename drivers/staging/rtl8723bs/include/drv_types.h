@@ -16,13 +16,13 @@
 
 #include <linux/version.h>
 #include <linux/sched/signal.h>
-#include <autoconf.h>
-#include <basic_types.h>
-#include <osdep_service.h>
-#include <rtw_byteorder.h>
-#include <wlan_bssdef.h>
-#include <wifi.h>
-#include <ieee80211.h>
+#include "autoconf.h"
+#include "basic_types.h"
+#include "osdep_service.h"
+#include "rtw_byteorder.h"
+#include "wlan_bssdef.h"
+#include "wifi.h"
+#include "ieee80211.h"
 
 enum _NIC_VERSION {
 
@@ -33,42 +33,42 @@ enum _NIC_VERSION {
 
 };
 
-#include <rtw_rf.h>
+#include "rtw_rf.h"
 
-#include <rtw_ht.h>
+#include "rtw_ht.h"
 
-#include <rtw_cmd.h>
-#include <cmd_osdep.h>
-#include <rtw_security.h>
-#include <rtw_xmit.h>
-#include <xmit_osdep.h>
-#include <rtw_recv.h>
+#include "rtw_cmd.h"
+#include "cmd_osdep.h"
+#include "rtw_security.h"
+#include "rtw_xmit.h"
+#include "xmit_osdep.h"
+#include "rtw_recv.h"
 
-#include <recv_osdep.h>
-#include <rtw_efuse.h>
-#include <hal_intf.h>
-#include <hal_com.h>
-#include <rtw_qos.h>
-#include <rtw_pwrctrl.h>
-#include <rtw_mlme.h>
-#include <mlme_osdep.h>
-#include <rtw_io.h>
-#include <rtw_ioctl.h>
-#include <rtw_ioctl_set.h>
-#include <osdep_intf.h>
-#include <rtw_eeprom.h>
-#include <sta_info.h>
-#include <rtw_event.h>
-#include <rtw_mlme_ext.h>
-#include <rtw_ap.h>
-#include <rtw_version.h>
-#include <rtw_odm.h>
+#include "recv_osdep.h"
+#include "rtw_efuse.h"
+#include "hal_intf.h"
+#include "hal_com.h"
+#include "rtw_qos.h"
+#include "rtw_pwrctrl.h"
+#include "rtw_mlme.h"
+#include "mlme_osdep.h"
+#include "rtw_io.h"
+#include "rtw_ioctl.h"
+#include "rtw_ioctl_set.h"
+#include "osdep_intf.h"
+#include "rtw_eeprom.h"
+#include "sta_info.h"
+#include "rtw_event.h"
+#include "rtw_mlme_ext.h"
+#include "rtw_ap.h"
+#include "rtw_version.h"
+#include "rtw_odm.h"
 
 #include "ioctl_cfg80211.h"
 
 #include <linux/ip.h>
 #include <linux/if_ether.h>
-#include <ethernet.h>
+#include "ethernet.h"
 
 #define SPEC_DEV_ID_NONE BIT(0)
 #define SPEC_DEV_ID_DISABLE_HT BIT(1)
@@ -211,7 +211,7 @@ struct registry_priv {
 #define BSSID_OFT(field) ((u32)FIELD_OFFSET(struct wlan_bssid_ex, field))
 #define BSSID_SZ(field)   sizeof(((struct wlan_bssid_ex *) 0)->field)
 
-#include <drv_types_sdio.h>
+#include "drv_types_sdio.h"
 
 #define is_primary_adapter(adapter) (1)
 #define get_iface_type(adapter) (IFACE_PORT0)
@@ -676,11 +676,11 @@ static inline u8 *myid(struct eeprom_priv *peepriv)
 }
 
 /*  HCI Related header file */
-#include <sdio_osintf.h>
-#include <sdio_ops.h>
-#include <sdio_hal.h>
+#include "sdio_osintf.h"
+#include "sdio_ops.h"
+#include "sdio_hal.h"
 
-#include <rtw_btcoex.h>
+#include "rtw_btcoex.h"
 
 void rtw_indicate_wx_disassoc_event(struct adapter *padapter);
 void rtw_indicate_wx_assoc_event(struct adapter *padapter);

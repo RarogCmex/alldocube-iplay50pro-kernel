@@ -16,7 +16,7 @@
 #ifndef _ibuf_cntrl_defs_h_
 #define _ibuf_cntrl_defs_h_
 
-#include <stream2mmio_defs.h>
+#include "stream2mmio_defs.h"
 #include <dma_v2_defs.h>
 
 #define _IBUF_CNTRL_REG_ALIGN 4

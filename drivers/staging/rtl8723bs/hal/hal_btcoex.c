@@ -9,7 +9,7 @@
 #include <hal_data.h>
 #include <rtw_debug.h>
 #include <hal_btcoex.h>
-#include <Mp_Precomp.h>
+#include "Mp_Precomp.h"
 
 /* 		Global variables */
 

@@ -51,6 +51,6 @@ static inline void fd_cacheflush(char * addr, long size)
 
 #define EXTRA_FLOPPY_PARAMS
 
-#include <floppy.h>
+#include "floppy.h"
 
 #endif /* _ASM_FLOPPY_H */

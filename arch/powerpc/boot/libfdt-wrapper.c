@@ -8,8 +8,8 @@
  */
 
 #include <stddef.h>
-#include <stdio.h>
-#include <page.h>
+#include "stdio.h"
+#include "page.h"
 #include <libfdt.h>
 #include "ops.h"
 

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#include <odm.h>
+#include "odm.h"
 
 #define IQK_DELAY_TIME_88E	    10
 #define index_mapping_NUM_88E	    15

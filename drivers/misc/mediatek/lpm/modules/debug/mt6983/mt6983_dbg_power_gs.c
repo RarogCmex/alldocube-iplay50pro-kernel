@@ -5,7 +5,7 @@
 
 #include <linux/fs.h>
 #include <lpm_dbg_fs_common.h>
-#include <mt6983_dbg_power_gs.h>
+#include "mt6983_dbg_power_gs.h"
 
 #include "mtk_power_gs_array.h"
 #include <lpm_call.h>

@@ -10,7 +10,7 @@
 #include <mt-plat/mboot_params.h>
 #endif
 
-#include <gpufreq_v2.h>
+#include "gpufreq_v2.h"
 #if IS_ENABLED(CONFIG_MTK_AEE_AED)
 #include <aed.h>
 #endif

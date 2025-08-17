@@ -7,7 +7,7 @@
 #define __LPM_CALL_H__
 
 #include <linux/list.h>
-#include <lpm_type.h>
+#include "lpm_type.h"
 
 struct lpm_callee_ipi {
 	int (*send)(int id, const struct lpm_data *val);

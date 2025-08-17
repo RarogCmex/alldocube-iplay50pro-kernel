@@ -14,7 +14,7 @@
 #include <linux/spinlock.h>
 
 #include <asm/io.h>
-#include <irq.h>
+#include "irq.h"
 
 /* i8259A PIC registers */
 #define PIC_MASTER_CMD		0x20

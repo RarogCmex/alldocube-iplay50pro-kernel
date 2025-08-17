@@ -6,7 +6,7 @@
 
 /*
  * WARNING: User-space programs should not #include <linux/atm.h> directly.
- *          Instead, #include <atm.h>
+ *          Instead, #include "atm.h"
  */
 
 #ifndef _UAPI_LINUX_ATM_H

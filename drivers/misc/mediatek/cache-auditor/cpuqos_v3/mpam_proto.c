@@ -24,12 +24,12 @@
 #endif
 
 #define CREATE_TRACE_POINTS
-#include <cpuqos_v3_trace.h>
+#include "cpuqos_v3_trace.h"
 #undef CREATE_TRACE_POINTS
 #undef TRACE_INCLUDE_PATH
 
 #define CREATE_TRACE_POINTS
-#include <met_mpam_events.h>
+#include "met_mpam_events.h"
 #undef CREATE_TRACE_POINTS
 #undef TRACE_INCLUDE_PATH
 

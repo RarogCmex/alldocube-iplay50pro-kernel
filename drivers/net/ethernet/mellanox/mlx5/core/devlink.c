@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
 /* Copyright (c) 2019 Mellanox Technologies */
 
-#include <devlink.h>
+#include "devlink.h"
 
 #include "mlx5_core.h"
 #include "fw_reset.h"

@@ -6,7 +6,7 @@
 #include <linux/errno.h>
 #include <asm-generic/hugetlb_encode.h>
 #ifndef __KERNEL__
-#include <unistd.h>
+#include "unistd.h"
 #endif
 
 /*

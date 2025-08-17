@@ -10,7 +10,7 @@
 #include <linux/ioctl.h>
 #include <linux/cdev.h>
 #include <linux/semaphore.h>
-#include <elliptic_data_io.h>
+#include "elliptic_data_io.h"
 
 #define ELLIPTIC_DEVICENAME "elliptic"
 #define ELLIPTIC_NUM_DEVICES 2

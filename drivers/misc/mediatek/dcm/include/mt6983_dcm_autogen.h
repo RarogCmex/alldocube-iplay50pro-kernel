@@ -6,7 +6,7 @@
 #ifndef __MTK_DCM_AUTOGEN_H__
 #define __MTK_DCM_AUTOGEN_H__
 
-#include <mtk_dcm.h>
+#include "mtk_dcm.h"
 
 #if IS_ENABLED(CONFIG_OF)
 /* TODO: Fix all base addresses. */

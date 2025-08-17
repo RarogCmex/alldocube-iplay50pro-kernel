@@ -4,8 +4,8 @@
  */
 
 #include <linux/io.h>
-#include <mtk_qos_ipi.h>
-#include <mtk_qos_share.h>
+#include "mtk_qos_ipi.h"
+#include "mtk_qos_share.h"
 
 #if IS_ENABLED(CONFIG_MTK_TINYSYS_SSPM_SUPPORT)
 #include <sspm_reservedmem.h>

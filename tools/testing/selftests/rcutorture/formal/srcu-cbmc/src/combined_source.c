@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
-#include <config.h>
+#include "config.h"
 
 /* Include all source files. */
 

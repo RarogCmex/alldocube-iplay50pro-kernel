@@ -5,7 +5,7 @@
 #include <linux/if_ether.h>
 #include <linux/init.h>
 
-#include <bcm63xx_regs.h>
+#include "bcm63xx_regs.h"
 
 /*
  * on board ethernet platform data

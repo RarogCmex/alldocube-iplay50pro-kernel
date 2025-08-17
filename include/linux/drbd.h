@@ -21,7 +21,7 @@
 #else
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <limits.h>
+#include "limits.h"
 
 /* Although the Linux source code makes a difference between
    generic endianness and the bitfields' endianness, there is no

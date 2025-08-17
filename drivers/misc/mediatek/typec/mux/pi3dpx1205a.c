@@ -19,7 +19,7 @@
 #include "mux_switch.h"
 #endif
 
-#include <pi3dpx1205a.h>
+#include "pi3dpx1205a.h"
 
 #define K_EMERG	(1<<7)
 #define K_QMU	(1<<7)

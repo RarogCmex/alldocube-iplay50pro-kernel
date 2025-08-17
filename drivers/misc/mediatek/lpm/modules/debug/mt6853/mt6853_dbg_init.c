@@ -14,9 +14,9 @@
 #include <lpm_dbg_fs_common.h>
 #include <lpm_dbg_logger.h>
 
-#include <mt6853_lpm_trace_event.h>
-#include <mt6853_dbg_fs.h>
-#include <mt6853_lpm_logger.h>
+#include "mt6853_lpm_trace_event.h"
+#include "mt6853_dbg_fs.h"
+#include "mt6853_lpm_logger.h"
 
 static int __init mt6853_dbg_early_initcall(void)
 {

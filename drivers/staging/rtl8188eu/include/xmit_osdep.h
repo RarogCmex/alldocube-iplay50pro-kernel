@@ -7,8 +7,8 @@
 #ifndef __XMIT_OSDEP_H_
 #define __XMIT_OSDEP_H_
 
-#include <osdep_service.h>
-#include <drv_types.h>
+#include "osdep_service.h"
+#include "drv_types.h"
 
 #define NR_XMITFRAME	256
 

@@ -2,6 +2,6 @@
 #ifndef _SKC_LINUX_CTYPE_H
 #define _SKC_LINUX_CTYPE_H
 
-#include <ctype.h>
+#include "ctype.h"
 
 #endif

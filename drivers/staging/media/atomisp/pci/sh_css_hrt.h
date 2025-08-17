@@ -19,7 +19,7 @@
 #include <sp.h>
 #include <isp.h>
 
-#include <ia_css_err.h>
+#include "ia_css_err.h"
 
 /* SP access */
 void sh_css_hrt_sp_start_si(void);

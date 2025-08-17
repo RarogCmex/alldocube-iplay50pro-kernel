@@ -14,10 +14,10 @@
 #include <linux/uaccess.h>
 
 #define MUSB_OTG_CSR0 0x102
-#include <musb.h>
-#include <musb_core.h>
-#include <musb_debug.h>
-#include <musb_dr.h>
+#include "musb.h"
+#include "musb_core.h"
+#include "musb_debug.h"
+#include "musb_dr.h"
 
 #define PROC_DIR_MTK_USB "mtk_usb"
 #define PROC_FILE_REGDUMP "mtk_usb/regdump"

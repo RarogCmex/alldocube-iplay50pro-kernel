@@ -7,7 +7,7 @@
 #ifdef __KERNEL__
 #include <linux/stddef.h>
 #else
-#include <stddef.h>
+#include "stddef.h"
 #endif
 
 /*

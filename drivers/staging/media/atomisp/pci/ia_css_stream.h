@@ -17,7 +17,7 @@
 #define _IA_CSS_STREAM_H_
 
 #include <type_support.h>
-#include <system_local.h>
+#include "system_local.h"
 #if !defined(ISP2401)
 #include <input_system.h>
 #endif

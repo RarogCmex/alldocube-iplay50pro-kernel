@@ -17,13 +17,13 @@
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
 
-#include <slbc.h>
-#include <slbc_ops.h>
-#include <slbc_ipi.h>
-#include <mtk_slbc_sram.h>
+#include "slbc.h"
+#include "slbc_ops.h"
+#include "slbc_ipi.h"
+#include "mtk_slbc_sram.h"
 
 /* #define CREATE_TRACE_POINTS */
-/* #include <slbc_events.h> */
+/* #include "slbc_events.h" */
 #define trace_slbc_api(f, id)
 #define trace_slbc_data(f, data)
 

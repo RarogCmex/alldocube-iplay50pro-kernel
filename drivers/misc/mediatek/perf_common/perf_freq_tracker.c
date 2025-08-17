@@ -7,8 +7,8 @@
 #include <linux/kallsyms.h>
 #include <linux/hashtable.h>
 
-#include <perf_tracker_internal.h>
-#include <perf_tracker_trace.h>
+#include "perf_tracker_internal.h"
+#include "perf_tracker_trace.h"
 
 
 struct h_node {

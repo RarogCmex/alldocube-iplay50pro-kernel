@@ -7,7 +7,7 @@
 #ifndef __RTW_BTCOEX_H__
 #define __RTW_BTCOEX_H__
 
-#include <drv_types.h>
+#include "drv_types.h"
 
 
 #define	PACKET_NORMAL			0
